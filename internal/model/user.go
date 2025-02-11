@@ -7,3 +7,10 @@ type User struct {
 	Password string `json:"password"`
 	Coins    int64  `json:"coins"`
 }
+
+// UserUpdate модель обновления пользователя сервисного слоя
+type UserUpdate struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Coins    int64  `json:"coins"`
+}

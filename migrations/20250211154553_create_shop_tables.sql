@@ -4,14 +4,14 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  coins BIGINT NOT NULL DEFAULT 1000
+  coins INTEGER NOT NULL DEFAULT 1000
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
   id SERIAL PRIMARY KEY,
-  from_user_id BIGINT NOT NULL,
-  to_user_id BIGINT NOT NULL,
-  amount BIGINT NOT NULL,
+  from_user_id INTEGER NOT NULL,
+  to_user_id INTEGER NOT NULL,
+  amount INTEGER NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   CONSTRAINT fk_transactions_from FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_transactions_to FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 CREATE TABLE IF NOT EXISTS inventory (
   id SERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL,
+  user_id INTEGER NOT NULL,
   item_name TEXT NOT NULL,
-  quantity BIGINT NOT NULL,
+  quantity INTEGER NOT NULL,
   CONSTRAINT fk_inventory_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

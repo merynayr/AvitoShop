@@ -115,11 +115,17 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 
 	router := gin.Default()
 
+	a.serviceProvider.AccessMiddleware()
+	router.Use(a.serviceProvider.middleware.Check())
+
 	a.serviceProvider.ShopAPI(ctx)
 	a.serviceProvider.shopAPI.RegisterRoutes(router)
 
 	a.serviceProvider.UserAPI(ctx)
 	a.serviceProvider.userAPI.RegisterRoutes(router)
+
+	a.serviceProvider.AuthAPI(ctx)
+	a.serviceProvider.authAPI.RegisterRoutes(router)
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

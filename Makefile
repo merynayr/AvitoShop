@@ -2,7 +2,7 @@ include .env
 
 LOCAL_BIN:=$(CURDIR)/bin
 
-LOCAL_MIGRATION_DIR=$(MIGRATION_DIR)
+LOCAL_MIGRATION_DIR=.$(MIGRATION_DIR)
 LOCAL_MIGRATION_DSN="host=localhost port=${DB_PORT} dbname=${DB_DB} user=${DB_USER} password=${DB_PASSWORD} sslmode=disable"
 
 swagger:

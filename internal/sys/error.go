@@ -1,6 +1,9 @@
 package sys
 
 import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
 	"github.com/merynayr/AvitoShop/internal/sys/codes"
@@ -39,4 +42,20 @@ func GetCommonError(err error) *commonError {
 	}
 
 	return ce
+}
+
+// HandleError обрабатывает ошибки и отправляет корректный HTTP-ответ
+func HandleError(c *gin.Context, err error) {
+	if ce := GetCommonError(err); ce != nil {
+		c.JSON(int(ce.Code()), gin.H{
+			"error": ce.Error(),
+			"code":  ce.Code(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"error": "internal server error",
+		"code":  http.StatusInternalServerError,
+	})
 }

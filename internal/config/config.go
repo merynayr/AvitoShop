@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/joho/godotenv"
 )
 
@@ -33,4 +35,17 @@ type LoggerConfig interface {
 // SwaggerConfig is interface of a swagger config
 type SwaggerConfig interface {
 	Address() string
+}
+
+// AuthConfig интерфейс конфига auth сервиса
+type AuthConfig interface {
+	RefreshTokenSecretKey() []byte
+	AccessTokenSecretKey() []byte
+	RefreshTokenExp() time.Duration
+	AccessTokenExp() time.Duration
+}
+
+// AccessConfig интерфейс конфига access сервиса
+type AccessConfig interface {
+	UserAccessesMap() (map[string]struct{}, error)
 }

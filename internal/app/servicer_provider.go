@@ -13,14 +13,19 @@ import (
 	"github.com/merynayr/AvitoShop/internal/repository"
 	"github.com/merynayr/AvitoShop/internal/service"
 
+	authAPI "github.com/merynayr/AvitoShop/internal/api/auth"
 	shopAPI "github.com/merynayr/AvitoShop/internal/api/shop"
 	userAPI "github.com/merynayr/AvitoShop/internal/api/user"
 
+	accessService "github.com/merynayr/AvitoShop/internal/service/access"
+	authService "github.com/merynayr/AvitoShop/internal/service/auth"
 	shopService "github.com/merynayr/AvitoShop/internal/service/shop"
 	userService "github.com/merynayr/AvitoShop/internal/service/user"
 
 	shopRepository "github.com/merynayr/AvitoShop/internal/repository/shop"
 	userRepository "github.com/merynayr/AvitoShop/internal/repository/user"
+
+	"github.com/merynayr/AvitoShop/internal/middleware/access"
 )
 
 // Структура приложения со всеми зависимости
@@ -29,6 +34,8 @@ type serviceProvider struct {
 	httpConfig    config.HTTPConfig
 	loggerConfig  config.LoggerConfig
 	swaggerConfig config.SwaggerConfig
+	authConfig    config.AuthConfig
+	accessConfig  config.AccessConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -40,6 +47,12 @@ type serviceProvider struct {
 	userAPI        *userAPI.API
 	userService    service.UserService
 	userRepository repository.UserRepository
+
+	authAPI     *authAPI.API
+	authService service.AuthService
+
+	middleware    *access.Middleware
+	accessService service.AccessService
 }
 
 // NewServiceProvider возвращает новый объект API слоя
@@ -95,6 +108,34 @@ func (s *serviceProvider) SwaggerConfig() config.SwaggerConfig {
 	}
 
 	return s.swaggerConfig
+}
+
+// AuthConfig инициализирует конфиг auth сервиса
+func (s *serviceProvider) AuthConfig() config.AuthConfig {
+	if s.authConfig == nil {
+		cfg, err := env.NewAuthConfig()
+		if err != nil {
+			log.Fatalf("failed to get auth config")
+		}
+
+		s.authConfig = cfg
+	}
+
+	return s.authConfig
+}
+
+// AccessConfig инициализирует конфиг access конфига
+func (s *serviceProvider) AccessConfig() config.AccessConfig {
+	if s.accessConfig == nil {
+		cfg, err := env.NewAccessConfig()
+		if err != nil {
+			log.Fatalf("failed to get access service")
+		}
+
+		s.accessConfig = cfg
+	}
+
+	return s.accessConfig
 }
 
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
@@ -176,4 +217,47 @@ func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.API {
 	}
 
 	return s.userAPI
+}
+
+// AuthAPI инициализирует api слой auth
+func (s *serviceProvider) AuthAPI(ctx context.Context) *authAPI.API {
+	if s.authAPI == nil {
+		s.authAPI = authAPI.NewAPI(s.AuthService(ctx))
+	}
+
+	return s.authAPI
+}
+
+// AuthService иницилизирует сервисный слой auth
+func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
+	if s.authService == nil {
+		s.authService = authService.NewService(
+			s.UserRepository(ctx),
+			s.AuthConfig(),
+		)
+	}
+
+	return s.authService
+}
+
+// AccessMiddleware инициализирует middleware доступа
+func (s *serviceProvider) AccessMiddleware() *access.Middleware {
+	if s.middleware == nil {
+		s.middleware = access.NewMiddleware(s.AccessService(context.Background()))
+	}
+	return s.middleware
+}
+
+// AccessService иницилизирует сервисный слой access
+func (s *serviceProvider) AccessService(_ context.Context) service.AccessService {
+	if s.accessService == nil {
+		uMap, err := s.AccessConfig().UserAccessesMap()
+		if err != nil {
+			log.Fatalf("failed to get user access map: %v", err)
+		}
+
+		s.accessService = accessService.NewService(uMap, s.AuthConfig())
+	}
+
+	return s.accessService
 }
