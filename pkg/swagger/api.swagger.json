@@ -1,0 +1,39 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a AvitoShop API",
+        "title": "AvitoShop",
+        "contact": {
+            "name": "Dmitry Boyarkin",
+            "email": "boyarkin_dima2@mail.ru"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/user": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получить информацию о монетах, инвентаре и истории транзакций",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shop"
+                ],
+                "summary": "Получить информацию о монетах",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    }
+}
