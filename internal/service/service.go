@@ -15,7 +15,9 @@ type ShopService interface {
 // UserService интерфейс сервисного слоя user
 type UserService interface {
 	Buy(ctx context.Context, user *model.User, item string) error
+	SendCoins(ctx context.Context, userID int64, toUsername string, amount int64) error
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
+	GetUserInfo(ctx context.Context, userID int64) (model.UserInfoResponse, error)
 }
 
 // AuthService интерфейс сервисного слоя auth

@@ -28,7 +28,9 @@ func (api *API) RegisterRoutes(router *gin.Engine) {
 	userGroup := router.Group("/api")
 	{
 		userGroup.GET("/user", api.Health)
-		userGroup.GET("/buy/:item", api.middleware.ExtractUserID(), api.Buy)
+		userGroup.POST("/sendCoin", api.middleware.ExtractUserID(), api.SendCoin)
+		userGroup.POST("/buy/:item", api.middleware.ExtractUserID(), api.Buy)
+		userGroup.GET("/info", api.middleware.ExtractUserID(), api.Info)
 	}
 }
 

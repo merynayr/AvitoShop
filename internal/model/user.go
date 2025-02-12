@@ -14,3 +14,16 @@ type UserUpdate struct {
 	Username string `json:"username"`
 	Coins    int64  `json:"coins"`
 }
+
+// CoinHistory модель истории транзакций
+type CoinHistory struct {
+	Received []Received `json:"received"`
+	Sent     []Sent     `json:"sent"`
+}
+
+// UserInfoResponse модель для ответа запроса
+type UserInfoResponse struct {
+	Coins       int64           `json:"coins"`
+	Inventory   []InventoryItem `json:"inventory"`
+	CoinHistory CoinHistory     `json:"coinHistory"`
+}

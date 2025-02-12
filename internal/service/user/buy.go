@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/merynayr/AvitoShop/internal/logger"
 	"github.com/merynayr/AvitoShop/internal/model"
 )
 
@@ -24,22 +25,26 @@ func (s *userService) Buy(ctx context.Context, user *model.User, item string) er
 			Coins: user.Coins - price,
 		})
 		if errTx != nil {
+			logger.Error(errTx.Error())
 			return errTx
 		}
 
-		exist, newQuantity, errTx := s.shopRepository.CheckInventory(ctx, user, item)
+		exist, Quantity, errTx := s.shopRepository.CheckInventory(ctx, user.ID, item)
 		if errTx != nil {
+			logger.Error(errTx.Error())
 			return errTx
 		}
 
 		if !exist {
-			errTx = s.shopRepository.InsertNewInventory(ctx, user, item)
+			errTx = s.shopRepository.InsertNewInventory(ctx, user.ID, item)
 			if errTx != nil {
+				logger.Error(errTx.Error())
 				return errTx
 			}
 		} else {
-			errTx = s.shopRepository.UpdateInventory(ctx, user.ID, newQuantity)
+			errTx = s.shopRepository.UpdateInventory(ctx, item, user.ID, Quantity+1)
 			if errTx != nil {
+				logger.Error(errTx.Error())
 				return errTx
 			}
 		}

@@ -80,7 +80,7 @@ func (r *repo) GetUserByID(ctx context.Context, userID int64) (*model.User, erro
 		return nil, fmt.Errorf("user with id %d doesn't exist", userID)
 	}
 
-	query, args, err := sq.Select(idColumn, nameColumn).
+	query, args, err := sq.Select(idColumn, nameColumn, coinsColumn).
 		From(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Where(sq.Eq{idColumn: userID}).
@@ -145,15 +145,6 @@ func (r *repo) GetUserByName(ctx context.Context, name string) (*model.User, err
 // UpdateUser обновляет данные пользователя по id
 func (r *repo) UpdateUser(ctx context.Context, user *model.UserUpdate) error {
 	op := "UpdateUser"
-	logger.Debug("[%s] request data | id: %v", op, user.Coins)
-
-	exist, err := r.IsExistByID(ctx, user.ID)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		return fmt.Errorf("user with id %d doesn't exist", user.ID)
-	}
 
 	builderUpdate := sq.Update(tableName).
 		PlaceholderFormat(sq.Dollar)
