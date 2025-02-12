@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/utils/jwt"
 )
 
@@ -14,9 +15,13 @@ func (s *srv) GetRefreshToken(ctx context.Context, oldRefreshToken string) (stri
 		return "", fmt.Errorf("invalid refresh token")
 	}
 
-	userInfo, err := s.userRepository.GetUserByName(ctx, claims.Username)
+	user, err := s.userRepository.GetUserByName(ctx, claims.Username)
 	if err != nil {
 		return "", err
+	}
+	userInfo := &model.UserInfo{
+		Username: user.Username,
+		Password: user.Password,
 	}
 
 	token, err := jwt.GenerateToken(userInfo, s.authCfg.RefreshTokenSecretKey(), s.authCfg.RefreshTokenExp())

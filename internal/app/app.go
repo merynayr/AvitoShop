@@ -12,9 +12,9 @@ import (
 	"github.com/merynayr/AvitoShop/internal/closer"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/logger"
-	"github.com/rakyll/statik/fs"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 
 	_ "github.com/merynayr/AvitoShop/statik" //
@@ -116,6 +116,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	router := gin.Default()
 
 	a.serviceProvider.AccessMiddleware()
+	router.Use(a.serviceProvider.middleware.AddAccessTokenFromCookie())
 	router.Use(a.serviceProvider.middleware.Check())
 
 	a.serviceProvider.ShopAPI(ctx)

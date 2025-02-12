@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/merynayr/AvitoShop/internal/middleware"
 	"github.com/merynayr/AvitoShop/internal/service"
 )
 
@@ -11,12 +12,14 @@ import (
 // объект сервисного слоя (его интерфейса)
 type API struct {
 	userService service.UserService
+	middleware  middleware.UserMiddlware
 }
 
 // NewAPI возвращает новый объект имплементации API-слоя
-func NewAPI(userService service.UserService) *API {
+func NewAPI(userService service.UserService, middleware middleware.UserMiddlware) *API {
 	return &API{
 		userService: userService,
+		middleware:  middleware,
 	}
 }
 
@@ -25,6 +28,7 @@ func (api *API) RegisterRoutes(router *gin.Engine) {
 	userGroup := router.Group("/api")
 	{
 		userGroup.GET("/user", api.Health)
+		userGroup.GET("/buy/:item", api.middleware.ExtractUserID(), api.Buy)
 	}
 }
 

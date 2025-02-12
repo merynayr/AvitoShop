@@ -107,7 +107,7 @@ func (r *repo) GetUserByID(ctx context.Context, userID int64) (*model.User, erro
 }
 
 // GetUserByName получает из БД информацию пользователя
-func (r *repo) GetUserByName(ctx context.Context, name string) (*model.UserInfo, error) {
+func (r *repo) GetUserByName(ctx context.Context, name string) (*model.User, error) {
 	exist, err := r.IsNameExist(ctx, name)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (r *repo) GetUserByName(ctx context.Context, name string) (*model.UserInfo,
 		return nil, fmt.Errorf("user with name %s doesn't exist", name)
 	}
 
-	query, args, err := sq.Select(nameColumn, passwordColumn).
+	query, args, err := sq.Select(idColumn, nameColumn, passwordColumn, coinsColumn).
 		From(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Where(sq.Eq{nameColumn: name}).
@@ -132,20 +132,20 @@ func (r *repo) GetUserByName(ctx context.Context, name string) (*model.UserInfo,
 		QueryRaw: query,
 	}
 
-	var user modelRepo.UserInfo
+	var user modelRepo.User
 	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		logger.Debug("%s: failed to select user: %v", q.Name, err)
 		return nil, err
 	}
 
-	return converter.ToUserInfoFromRepo(&user), nil
+	return converter.ToUserFromRepo(&user), nil
 }
 
 // UpdateUser обновляет данные пользователя по id
 func (r *repo) UpdateUser(ctx context.Context, user *model.UserUpdate) error {
 	op := "UpdateUser"
-	logger.Debug("[%s] request data | id: %v", op, user.ID)
+	logger.Debug("[%s] request data | id: %v", op, user.Coins)
 
 	exist, err := r.IsExistByID(ctx, user.ID)
 	if err != nil {
@@ -162,7 +162,7 @@ func (r *repo) UpdateUser(ctx context.Context, user *model.UserUpdate) error {
 		builderUpdate = builderUpdate.Set(nameColumn, &user.Username)
 	}
 
-	if user.Coins > 0 {
+	if user.Coins >= 0 {
 		builderUpdate = builderUpdate.Set(coinsColumn, &user.Coins)
 	}
 

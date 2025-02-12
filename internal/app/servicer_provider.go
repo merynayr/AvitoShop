@@ -203,6 +203,7 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
 		s.userService = userService.NewService(
+			s.ShopRepository(ctx),
 			s.UserRepository(ctx),
 			s.TxManager(ctx),
 		)
@@ -213,7 +214,7 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 
 func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.API {
 	if s.userAPI == nil {
-		s.userAPI = userAPI.NewAPI(s.UserService(ctx))
+		s.userAPI = userAPI.NewAPI(s.UserService(ctx), s.AccessMiddleware())
 	}
 
 	return s.userAPI
@@ -222,7 +223,7 @@ func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.API {
 // AuthAPI инициализирует api слой auth
 func (s *serviceProvider) AuthAPI(ctx context.Context) *authAPI.API {
 	if s.authAPI == nil {
-		s.authAPI = authAPI.NewAPI(s.AuthService(ctx))
+		s.authAPI = authAPI.NewAPI(s.AuthService(ctx), s.AuthConfig())
 	}
 
 	return s.authAPI
@@ -243,7 +244,7 @@ func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 // AccessMiddleware инициализирует middleware доступа
 func (s *serviceProvider) AccessMiddleware() *access.Middleware {
 	if s.middleware == nil {
-		s.middleware = access.NewMiddleware(s.AccessService(context.Background()))
+		s.middleware = access.NewMiddleware(s.UserService(context.Background()), s.AccessService(context.Background()), s.AuthConfig())
 	}
 	return s.middleware
 }

@@ -26,9 +26,13 @@ func (s *srv) Login(ctx context.Context, name string, password string) (string, 
 		}
 	}
 
-	userInfo, err := s.userRepository.GetUserByName(ctx, name)
+	user, err := s.userRepository.GetUserByName(ctx, name)
 	if err != nil {
 		return "", err
+	}
+	userInfo := &model.UserInfo{
+		Username: user.Username,
+		Password: user.Password,
 	}
 
 	err = hash.CompareHashAndPass(password, userInfo.Password)

@@ -20,7 +20,7 @@ func (s *srv) Check(ctx *gin.Context, endpointAddress string) (string, error) {
 		return "", nil
 	}
 
-	authHeader := ctx.GetHeader("Authorization")
+	authHeader := ctx.GetHeader(authHeader)
 	if authHeader == "" {
 		return "", errors.New("authorization header is not provided")
 	}

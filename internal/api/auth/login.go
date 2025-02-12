@@ -15,7 +15,6 @@ import (
 func (a *API) Login(c *gin.Context) {
 	var req model.UserInfo
 
-	fmt.Println(req)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		sys.HandleError(c, sys.NewCommonError("invalid request format", codes.BadRequest))
 		return
@@ -33,6 +32,8 @@ func (a *API) Login(c *gin.Context) {
 		sys.HandleError(c, err)
 		return
 	}
+
+	a.setCookies(c, refreshToken, accessToken)
 
 	c.JSON(http.StatusOK, gin.H{
 		"refresh_token": refreshToken,

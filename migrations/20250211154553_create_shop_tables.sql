@@ -25,6 +25,25 @@ CREATE TABLE IF NOT EXISTS inventory (
   CONSTRAINT fk_inventory_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Добавляем таблицу для хранения цен на мерч
+CREATE TABLE IF NOT EXISTS merch_prices (
+  item_name TEXT PRIMARY KEY,
+  price INTEGER NOT NULL
+);
+
+-- Вставляем цены на мерч
+INSERT INTO merch_prices (item_name, price) VALUES
+  ('t-shirt', 80),
+  ('cup', 20),
+  ('book', 50),
+  ('pen', 10),
+  ('powerbank', 200),
+  ('hoody', 300),
+  ('umbrella', 200),
+  ('socks', 10),
+  ('wallet', 50),
+  ('pink-hoody', 500);
+
 CREATE INDEX IF NOT EXISTS idx_transactions_from ON transactions (from_user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_to ON transactions (to_user_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_user ON inventory (user_id);
@@ -36,4 +55,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_user_item ON inventory (user_id, item_name
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS merch_prices;
 -- +goose StatementEnd
