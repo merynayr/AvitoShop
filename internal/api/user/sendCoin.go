@@ -1,39 +1,50 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
-// SendCoin обрабатывает HTTP-запрос на перевод монет
+// SendCoin отправляет монеты другому пользователю
+// @Summary Отправить монеты другому пользователю
+// @Description Переводит указанное количество монет другому пользователю
+// @Tags shop
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param body body model.SendCoinRequest true "Данные для перевода монет"
+// @Success 200
+// @Failure 400 {object} sys.ErrorResponse
+// @Failure 401 {object} sys.ErrorResponse
+// @Failure 500 {object} sys.ErrorResponse
+// @Router /api/sendCoin [post]
 func (a *API) SendCoin(c *gin.Context) {
-	var req struct {
-		ToUser string `json:"toUser" binding:"required"`
-		Amount int64  `json:"amount" binding:"required,gt=0"`
-	}
-
+	var req model.SendCoinRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errors": "Invalid JSON"})
+		sys.HandleError(c, sys.NewCommonError("invalid request", codes.BadRequest))
 		return
 	}
 
 	userCtx, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		sys.HandleError(c, sys.NewCommonError("user not found", codes.Unauthorized))
 		return
 	}
 
 	user, ok := userCtx.(*model.User)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user"})
+		sys.HandleError(c, fmt.Errorf("invalid user"))
 		return
 	}
 
-	err := a.userService.SendCoins(c.Request.Context(), user.ID, req.ToUser, req.Amount)
+	err := a.userService.SendCoins(c.Request.Context(), user.ID, req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+		sys.HandleError(c, err)
 		return
 	}
 

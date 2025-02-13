@@ -1,33 +1,48 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
-// Buy обрабатывает HTTP-запрос на покупку мерча
+// Buy покупает предмет за монеты
+// @Summary Купить предмет
+// @Description Покупает указанный предмет за монеты
+// @Tags shop
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param item path string true "Название предмета"
+// @Success 200
+// @Failure 400 {object} sys.ErrorResponse
+// @Failure 401 {object} sys.ErrorResponse
+// @Failure 500 {object} sys.ErrorResponse
+// @Router /api/buy/{item} [get]
 func (a *API) Buy(c *gin.Context) {
 	item := c.Param("item")
 	item = strings.Trim(item, " \t\n\r")
 
 	userCtx, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		sys.HandleError(c, sys.NewCommonError("user not found", codes.Unauthorized))
 		return
 	}
 
 	user, ok := userCtx.(*model.User)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user"})
+		sys.HandleError(c, fmt.Errorf("invalid user"))
 		return
 	}
 
 	err := a.userService.Buy(c, user, item)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		sys.HandleError(c, err)
 		return
 	}
 

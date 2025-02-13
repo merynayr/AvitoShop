@@ -12,6 +12,10 @@ import (
 // @description This is a AvitoShop API
 // @contact.name Dmitry Boyarkin
 // @contact.email boyarkin_dima2@mail.ru
+// @host localhost:8080
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	ctx := context.Background()
 

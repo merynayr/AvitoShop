@@ -7,8 +7,8 @@ import (
 	"github.com/merynayr/AvitoShop/internal/model"
 )
 
-func (s *userService) SendCoins(ctx context.Context, userID int64, toUsername string, amount int64) error {
-	toUser, err := s.userRepository.GetUserByName(ctx, toUsername)
+func (s *userService) SendCoins(ctx context.Context, userID int64, SendCoins model.SendCoinRequest) error {
+	toUser, err := s.userRepository.GetUserByName(ctx, SendCoins.ToUser)
 	if err != nil {
 		return errors.New("recipient not found")
 	}
@@ -17,7 +17,7 @@ func (s *userService) SendCoins(ctx context.Context, userID int64, toUsername st
 	if err != nil {
 		return errors.New("user not found")
 	}
-	if fromUser.Coins < amount {
+	if fromUser.Coins < SendCoins.Amount {
 		return errors.New("not enough coins")
 	}
 
@@ -29,20 +29,20 @@ func (s *userService) SendCoins(ctx context.Context, userID int64, toUsername st
 
 		errTx = s.userRepository.UpdateUser(ctx, &model.UserUpdate{
 			ID:    fromUser.ID,
-			Coins: fromUser.Coins - amount,
+			Coins: fromUser.Coins - SendCoins.Amount,
 		})
 		if errTx != nil {
 			return errTx
 		}
 		errTx = s.userRepository.UpdateUser(ctx, &model.UserUpdate{
 			ID:    toUser.ID,
-			Coins: toUser.Coins + amount,
+			Coins: toUser.Coins + SendCoins.Amount,
 		})
 		if errTx != nil {
 			return errTx
 		}
 
-		errTx = s.shopRepository.CreateTransaction(ctx, fromUser.ID, toUser.ID, amount)
+		errTx = s.shopRepository.CreateTransaction(ctx, fromUser.ID, toUser.ID, SendCoins.Amount)
 		if errTx != nil {
 			return errTx
 		}

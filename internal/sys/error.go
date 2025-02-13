@@ -9,34 +9,36 @@ import (
 	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
-// Структура для обработчки http ошибок
-type commonError struct {
+// ErrorResponse Структура для обработчки http ошибок
+type ErrorResponse struct {
 	msg  string
 	code codes.Code
 }
 
 // NewCommonError создаёт новвую ошибку
-func NewCommonError(msg string, code codes.Code) *commonError {
-	return &commonError{msg, code}
+func NewCommonError(msg string, code codes.Code) *ErrorResponse {
+	return &ErrorResponse{msg, code}
 }
 
-func (r *commonError) Error() string {
+// Error возврашает сообщение ошибки
+func (r *ErrorResponse) Error() string {
 	return r.msg
 }
 
-func (r *commonError) Code() codes.Code {
+// Code возвращает код ошибки
+func (r *ErrorResponse) Code() codes.Code {
 	return r.code
 }
 
 // IsCommonError проверяет на соответствие ошибке
 func IsCommonError(err error) bool {
-	var ce *commonError
+	var ce *ErrorResponse
 	return errors.As(err, &ce)
 }
 
 // GetCommonError получает ошбику
-func GetCommonError(err error) *commonError {
-	var ce *commonError
+func GetCommonError(err error) *ErrorResponse {
+	var ce *ErrorResponse
 	if !errors.As(err, &ce) {
 		return nil
 	}

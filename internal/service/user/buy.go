@@ -2,20 +2,21 @@ package user
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/merynayr/AvitoShop/internal/logger"
 	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
 func (s *userService) Buy(ctx context.Context, user *model.User, item string) error {
 	price, err := s.shopRepository.GetMerchPrice(ctx, item)
 	if err != nil {
-		return err
+		return sys.NewCommonError("item does not exist", codes.BadRequest)
 	}
 
 	if user.Coins < price {
-		return fmt.Errorf("errors: not enough coins")
+		return sys.NewCommonError("not enough coins", codes.BadRequest)
 	}
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var errTx error

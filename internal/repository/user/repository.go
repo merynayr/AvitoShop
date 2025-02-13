@@ -180,39 +180,6 @@ func (r *repo) UpdateUser(ctx context.Context, user *model.UserUpdate) error {
 	return nil
 }
 
-// DeleteUser удаляет пользователя по id
-func (r *repo) DeleteUser(ctx context.Context, userID int64) error {
-	exist, err := r.IsExistByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		return fmt.Errorf("user with id %d doesn't exist", userID)
-	}
-
-	query, args, err := sq.Delete(tableName).
-		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{idColumn: userID}).
-		ToSql()
-
-	if err != nil {
-		return err
-	}
-
-	q := db.Query{
-		Name:     "user_repository.DeleteUser",
-		QueryRaw: query,
-	}
-
-	_, err = r.db.DB().ExecContext(ctx, q, args...)
-	if err != nil {
-		logger.Debug("%s: failed to delete user: %v", q.Name, err)
-		return err
-	}
-
-	return nil
-}
-
 // IsExistById проверяет, существует ли в БД пользователь с указанным ID
 func (r *repo) IsExistByID(ctx context.Context, userID int64) (bool, error) {
 	query, args, err := sq.Select("1").

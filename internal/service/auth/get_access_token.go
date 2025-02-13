@@ -19,7 +19,7 @@ func (s *srv) GetAccessToken(ctx context.Context, refreshToken string) (string, 
 	if err != nil {
 		return "", err
 	}
-	userInfo := &model.UserInfo{
+	userInfo := &model.AuthRequest{
 		Username: user.Username,
 		Password: user.Password,
 	}

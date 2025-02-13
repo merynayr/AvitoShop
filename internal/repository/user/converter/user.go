@@ -22,12 +22,12 @@ func ToUserFromRepo(user *modelRepo.User) *model.User {
 
 // ToUserInfoFromRepo конвертирует модель пользователя репо слоя в
 // модель сервисного слоя для авторизации
-func ToUserInfoFromRepo(user *modelRepo.UserInfo) *model.UserInfo {
+func ToUserInfoFromRepo(user *modelRepo.UserInfo) *model.AuthRequest {
 	if user == nil {
 		return nil
 	}
 
-	return &model.UserInfo{
+	return &model.AuthRequest{
 		Username: user.Username,
 		Password: user.Password,
 	}

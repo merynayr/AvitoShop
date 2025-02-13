@@ -10,7 +10,7 @@ import (
 )
 
 // GenerateToken генерирует jwt-токен
-func GenerateToken(info *model.UserInfo, secretKey []byte, duration time.Duration) (string, error) {
+func GenerateToken(info *model.AuthRequest, secretKey []byte, duration time.Duration) (string, error) {
 	if info == nil {
 		return "", fmt.Errorf("info is nil")
 	}

@@ -1,12 +1,13 @@
 package access
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/service"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 
 	"github.com/merynayr/AvitoShop/internal/utils/jwt"
 )
@@ -34,7 +35,7 @@ func (m *Middleware) Check() gin.HandlerFunc {
 
 		username, err := m.accessService.Check(c, endpoint)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "access denied"})
+			sys.HandleError(c, sys.NewCommonError("access denied", codes.Unauthorized))
 			c.Abort()
 			return
 		}
@@ -69,12 +70,14 @@ func (m *Middleware) ExtractUserID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
+			c.Abort()
 			return
 		}
 
 		if !strings.HasPrefix(authHeader, authPrefix) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
+			c.Abort()
 			return
 		}
 
@@ -82,13 +85,15 @@ func (m *Middleware) ExtractUserID() gin.HandlerFunc {
 
 		claims, err := jwt.VerifyToken(accessToken, m.authConfig.AccessTokenSecretKey())
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
+			c.Abort()
 			return
 		}
 
 		user, err := m.userService.GetUserByName(c, claims.Username)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{})
+			sys.HandleError(c, err)
+			c.Abort()
 			return
 		}
 

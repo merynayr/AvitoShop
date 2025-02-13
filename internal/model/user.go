@@ -21,9 +21,15 @@ type CoinHistory struct {
 	Sent     []Sent     `json:"sent"`
 }
 
-// UserInfoResponse модель для ответа запроса
-type UserInfoResponse struct {
+// InfoResponse модель для ответа запроса
+type InfoResponse struct {
 	Coins       int64           `json:"coins"`
 	Inventory   []InventoryItem `json:"inventory"`
 	CoinHistory CoinHistory     `json:"coinHistory"`
+}
+
+// SendCoinRequest модель запроса
+type SendCoinRequest struct {
+	ToUser string `json:"toUser" binding:"required"`
+	Amount int64  `json:"amount" binding:"required,gt=0"`
 }

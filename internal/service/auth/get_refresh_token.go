@@ -19,7 +19,7 @@ func (s *srv) GetRefreshToken(ctx context.Context, oldRefreshToken string) (stri
 	if err != nil {
 		return "", err
 	}
-	userInfo := &model.UserInfo{
+	userInfo := &model.AuthRequest{
 		Username: user.Username,
 		Password: user.Password,
 	}

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -188,7 +189,7 @@ func (a *App) runSwaggerServer() error {
 
 func serveSwaggerFile(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		logger.Debug("Serving swagger file: %s", path)
+		logger.Debug(fmt.Sprintf("Serving swagger file: %s", path))
 
 		statikFs, err := fs.New()
 		if err != nil {
@@ -196,7 +197,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		logger.Debug("Open swagger file: %s", path)
+		logger.Debug(fmt.Sprintf("Open swagger file: %s", path))
 
 		file, err := statikFs.Open(path)
 		if err != nil {
@@ -208,7 +209,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			_ = file.Close()
 		}()
 
-		logger.Debug("Read swagger file: %s", path)
+		logger.Debug(fmt.Sprintf("Read swagger file: %s", path))
 
 		content, err := io.ReadAll(file)
 		if err != nil {
@@ -216,7 +217,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		logger.Debug("Write swagger file: %s", path)
+		logger.Debug(fmt.Sprintf("Write swagger file: %s", path))
 
 		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(content)
@@ -225,6 +226,6 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		logger.Debug("Served swagger file: %s", path)
+		logger.Debug(fmt.Sprintf("Served swagger file: %s", path))
 	}
 }
