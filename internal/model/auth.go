@@ -4,8 +4,8 @@ import "github.com/dgrijalva/jwt-go"
 
 // AuthRequest структура запроса на аутентификацию
 type AuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=1"`
 }
 
 // AuthResponse структура ответа с токенами

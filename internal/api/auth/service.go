@@ -32,7 +32,10 @@ func (api *API) RegisterRoutes(router *gin.Engine) {
 
 // setCookies устанавливают токены в куки
 func (api *API) setCookies(c *gin.Context, refreshToken string, accessToken string) {
-	c.SetCookie("refresh_token", refreshToken, int(api.authConfig.RefreshTokenExp()*2), "/api", "", false, true)
-
-	c.SetCookie("access_token", accessToken, int(api.authConfig.AccessTokenExp()*2), "/api", "", false, true)
+	if len(refreshToken) > 0 {
+		c.SetCookie("refresh_token", refreshToken, int(api.authConfig.RefreshTokenExp()*2), "/api", "", false, true)
+	}
+	if len(accessToken) > 0 {
+		c.SetCookie("access_token", accessToken, int(api.authConfig.AccessTokenExp()*2), "/api", "", false, true)
+	}
 }

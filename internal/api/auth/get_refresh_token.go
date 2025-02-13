@@ -10,20 +10,18 @@ import (
 
 // GetRefreshToken обрабатывает HTTP-запрос на получение refresh токена
 func (a *API) GetRefreshToken(c *gin.Context) {
-	var req struct {
-		OldRefreshToken string `json:"old_refresh_token" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
+	oldRefreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
 		sys.HandleError(c, sys.NewCommonError("invalid request", codes.BadRequest))
 		return
 	}
 
-	token, err := a.authService.GetRefreshToken(c.Request.Context(), req.OldRefreshToken)
+	token, err := a.authService.GetRefreshToken(c.Request.Context(), oldRefreshToken)
 	if err != nil {
 		sys.HandleError(c, sys.NewCommonError("invalid refresh token", codes.Unauthorized))
 		return
 	}
 
+	a.setCookies(c, token, "")
 	c.JSON(http.StatusOK, gin.H{"refresh_token": token})
 }

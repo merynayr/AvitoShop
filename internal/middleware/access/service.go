@@ -1,15 +1,11 @@
 package access
 
 import (
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/service"
 	"github.com/merynayr/AvitoShop/internal/sys"
 	"github.com/merynayr/AvitoShop/internal/sys/codes"
-
-	"github.com/merynayr/AvitoShop/internal/utils/jwt"
 )
 
 // Middleware access структура
@@ -31,7 +27,7 @@ func NewMiddleware(userService service.UserService, accessService service.Access
 // Check - общий middleware для проверки доступа
 func (m *Middleware) Check() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		endpoint := c.Request.URL.Path
+		endpoint := c.FullPath()
 
 		username, err := m.accessService.Check(c, endpoint)
 		if err != nil {
@@ -40,7 +36,17 @@ func (m *Middleware) Check() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("username", username)
+		if username != "" {
+			user, err := m.userService.GetUserByName(c, username)
+
+			if err != nil {
+				sys.HandleError(c, err)
+				c.Abort()
+				return
+			}
+
+			c.Set("user", user)
+		}
 
 		c.Next()
 	}
@@ -56,49 +62,6 @@ func (m *Middleware) AddAccessTokenFromCookie() gin.HandlerFunc {
 		}
 
 		c.Request.Header.Set("Authorization", "Bearer "+accessToken)
-		c.Next()
-	}
-}
-
-const (
-	authHeader = "Authorization"
-	authPrefix = "Bearer "
-)
-
-// ExtractUserID получает имя из токена
-func (m *Middleware) ExtractUserID() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
-			c.Abort()
-			return
-		}
-
-		if !strings.HasPrefix(authHeader, authPrefix) {
-			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
-			c.Abort()
-			return
-		}
-
-		accessToken := strings.TrimPrefix(authHeader, authPrefix)
-
-		claims, err := jwt.VerifyToken(accessToken, m.authConfig.AccessTokenSecretKey())
-		if err != nil {
-			sys.HandleError(c, sys.NewCommonError("invalid token", codes.Unauthorized))
-			c.Abort()
-			return
-		}
-
-		user, err := m.userService.GetUserByName(c, claims.Username)
-		if err != nil {
-			sys.HandleError(c, err)
-			c.Abort()
-			return
-		}
-
-		c.Set("user", user)
-
 		c.Next()
 	}
 }

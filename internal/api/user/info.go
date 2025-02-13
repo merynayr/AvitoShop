@@ -35,7 +35,7 @@ func (a *API) Info(c *gin.Context) {
 		return
 	}
 
-	userInfo, err := a.userService.GetUserInfo(c.Request.Context(), user.ID)
+	userInfo, err := a.userService.GetUserInfo(c, user)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

@@ -2,7 +2,8 @@ package middleware
 
 import "github.com/gin-gonic/gin"
 
-// UserMiddlware интерфейс
-type UserMiddlware interface {
-	ExtractUserID() gin.HandlerFunc
+// UserMiddleware интерфейс
+type UserMiddleware interface {
+	AddAccessTokenFromCookie() gin.HandlerFunc
+	Check() gin.HandlerFunc
 }

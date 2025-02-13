@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 	"github.com/merynayr/AvitoShop/internal/utils/hash"
 	"github.com/merynayr/AvitoShop/internal/utils/jwt"
 )
@@ -37,7 +38,7 @@ func (s *srv) Login(ctx context.Context, name string, password string) (string, 
 
 	err = hash.CompareHashAndPass(password, userInfo.Password)
 	if err != nil {
-		return "", fmt.Errorf("invalid password")
+		return "", sys.NewCommonError("invalid password", codes.BadRequest)
 	}
 
 	token, err := jwt.GenerateToken(userInfo, s.authCfg.RefreshTokenSecretKey(), s.authCfg.RefreshTokenExp())

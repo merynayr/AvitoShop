@@ -2,51 +2,54 @@ package user
 
 import (
 	"context"
-	"errors"
 
+	"github.com/merynayr/AvitoShop/internal/logger"
 	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
+	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
-func (s *userService) SendCoins(ctx context.Context, userID int64, SendCoins model.SendCoinRequest) error {
-	toUser, err := s.userRepository.GetUserByName(ctx, SendCoins.ToUser)
+func (s *userService) SendCoins(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) error {
+	toUser, err := s.userRepository.GetUserByName(ctx, sendCoins.ToUser)
 	if err != nil {
-		return errors.New("recipient not found")
+		return sys.NewCommonError("recipient not found", codes.BadRequest)
 	}
 
-	fromUser, err := s.userRepository.GetUserByID(ctx, userID)
-	if err != nil {
-		return errors.New("user not found")
-	}
-	if fromUser.Coins < SendCoins.Amount {
-		return errors.New("not enough coins")
+	if fromUser.Coins < sendCoins.Amount {
+		return sys.NewCommonError("not enough coins", codes.BadRequest)
 	}
 
 	if toUser.ID == fromUser.ID {
-		return errors.New("you can't transfer money to yourself")
+		return sys.NewCommonError("you can't transfer money to yourself", codes.BadRequest)
 	}
+
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var errTx error
 
 		errTx = s.userRepository.UpdateUser(ctx, &model.UserUpdate{
 			ID:    fromUser.ID,
-			Coins: fromUser.Coins - SendCoins.Amount,
+			Coins: fromUser.Coins - sendCoins.Amount,
 		})
 		if errTx != nil {
 			return errTx
 		}
 		errTx = s.userRepository.UpdateUser(ctx, &model.UserUpdate{
 			ID:    toUser.ID,
-			Coins: toUser.Coins + SendCoins.Amount,
+			Coins: toUser.Coins + sendCoins.Amount,
 		})
 		if errTx != nil {
 			return errTx
 		}
 
-		errTx = s.shopRepository.CreateTransaction(ctx, fromUser.ID, toUser.ID, SendCoins.Amount)
+		errTx = s.shopRepository.CreateTransaction(ctx, fromUser.ID, toUser.ID, sendCoins.Amount)
 		if errTx != nil {
 			return errTx
 		}
 		return nil
 	})
+
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	return err
 }

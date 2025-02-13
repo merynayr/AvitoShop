@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
+	"github.com/merynayr/AvitoShop/internal/logger"
 	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
@@ -48,6 +49,7 @@ func GetCommonError(err error) *ErrorResponse {
 
 // HandleError обрабатывает ошибки и отправляет корректный HTTP-ответ
 func HandleError(c *gin.Context, err error) {
+	logger.Debug(err.Error())
 	if ce := GetCommonError(err); ce != nil {
 		c.JSON(int(ce.Code()), gin.H{
 			"error": ce.Error(),

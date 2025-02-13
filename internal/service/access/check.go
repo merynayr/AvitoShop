@@ -2,6 +2,7 @@ package access
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,8 @@ const (
 
 // Check проверяет, имеет ли пользователь доступ к эндпоинту
 func (s *srv) Check(ctx *gin.Context, endpointAddress string) (string, error) {
-
+	fmt.Println(s.userAccesses)
+	fmt.Println(endpointAddress)
 	if _, ok := s.userAccesses[endpointAddress]; !ok {
 		return "", nil
 	}
@@ -34,11 +36,6 @@ func (s *srv) Check(ctx *gin.Context, endpointAddress string) (string, error) {
 	claims, err := jwt.VerifyToken(accessToken, s.authConfig.AccessTokenSecretKey())
 	if err != nil {
 		return "", errors.New("access token is invalid")
-	}
-
-	// Проверяем, есть ли доступ у пользователя к запрашиваемому пути
-	if _, ok := s.userAccesses[endpointAddress]; !ok {
-		return "", errors.New("access denied")
 	}
 
 	return claims.Username, nil

@@ -42,7 +42,7 @@ func (a *API) SendCoin(c *gin.Context) {
 		return
 	}
 
-	err := a.userService.SendCoins(c.Request.Context(), user.ID, req)
+	err := a.userService.SendCoins(c, user, &req)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

@@ -20,7 +20,6 @@ type ShopRepository interface {
 // UserRepository - интерфейс репо слоя user
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (int64, error)
-	GetUserByID(ctx context.Context, userID int64) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.UserUpdate) error
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
 	IsExistByID(ctx context.Context, userID int64) (bool, error)

@@ -71,41 +71,6 @@ func (r *repo) CreateUser(ctx context.Context, user *model.User) (int64, error) 
 	return userID, nil
 }
 
-func (r *repo) GetUserByID(ctx context.Context, userID int64) (*model.User, error) {
-	exist, err := r.IsExistByID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		return nil, fmt.Errorf("user with id %d doesn't exist", userID)
-	}
-
-	query, args, err := sq.Select(idColumn, nameColumn, coinsColumn).
-		From(tableName).
-		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{idColumn: userID}).
-		ToSql()
-
-	if err != nil {
-		return nil, err
-	}
-
-	q := db.Query{
-		Name:     "user_repository.GetUserByID",
-		QueryRaw: query,
-	}
-
-	var user modelRepo.User
-	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
-	if err != nil {
-		logger.Debug("%s: failed to select user: %v", q.Name, err)
-		return nil, err
-	}
-
-	logger.Debug("%s: selected user %d", q.Name, userID)
-	return converter.ToUserFromRepo(&user), nil
-}
-
 // GetUserByName получает из БД информацию пользователя
 func (r *repo) GetUserByName(ctx context.Context, name string) (*model.User, error) {
 	exist, err := r.IsNameExist(ctx, name)
