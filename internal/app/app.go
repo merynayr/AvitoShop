@@ -116,12 +116,9 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 
 	router := gin.Default()
 
-	a.serviceProvider.AccessMiddleware()
+	a.serviceProvider.AccessMiddleware(ctx)
 	router.Use(a.serviceProvider.middleware.AddAccessTokenFromCookie())
 	router.Use(a.serviceProvider.middleware.Check())
-
-	a.serviceProvider.ShopAPI(ctx)
-	a.serviceProvider.shopAPI.RegisterRoutes(router)
 
 	a.serviceProvider.UserAPI(ctx)
 	a.serviceProvider.userAPI.RegisterRoutes(router)

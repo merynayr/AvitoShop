@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/sys"
-	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
 // SendCoin отправляет монеты другому пользователю
@@ -26,19 +25,19 @@ import (
 func (a *API) SendCoin(c *gin.Context) {
 	var req model.SendCoinRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		sys.HandleError(c, sys.NewCommonError("invalid request", codes.BadRequest))
+		sys.HandleError(c, sys.InvalidRequestError)
 		return
 	}
 
 	userCtx, exists := c.Get("user")
 	if !exists {
-		sys.HandleError(c, sys.NewCommonError("user not found", codes.Unauthorized))
+		sys.HandleError(c, sys.UserNotFoundError)
 		return
 	}
 
 	user, ok := userCtx.(*model.User)
 	if !ok {
-		sys.HandleError(c, fmt.Errorf("invalid user"))
+		sys.HandleError(c, fmt.Errorf(sys.ErrInvalidUser))
 		return
 	}
 

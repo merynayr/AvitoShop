@@ -51,3 +51,12 @@ test-coverage:
 	go tool cover -html=coverage.out;
 	go tool cover -func=./coverage.out | grep "total";
 	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+
+
+TEST_MIGRATION_DSN="host=localhost port=5433 dbname=avito_test user=test_user password=test_password sslmode=disable"
+
+migration_for_test_up:
+	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${TEST_MIGRATION_DSN} up -v
+
+migration_for_test_down:
+	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${TEST_MIGRATION_DSN} down -v

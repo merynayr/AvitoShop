@@ -2,10 +2,11 @@ package access
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/merynayr/AvitoShop/internal/model"
+	"github.com/merynayr/AvitoShop/internal/sys"
 	"github.com/merynayr/AvitoShop/internal/utils/jwt"
 )
 
@@ -15,28 +16,32 @@ const (
 )
 
 // Check проверяет, имеет ли пользователь доступ к эндпоинту
-func (s *srv) Check(ctx *gin.Context, endpointAddress string) (string, error) {
-	fmt.Println(s.userAccesses)
-	fmt.Println(endpointAddress)
+func (s *srv) Check(ctx *gin.Context, endpointAddress string) (*model.User, error) {
+
 	if _, ok := s.userAccesses[endpointAddress]; !ok {
-		return "", nil
+		return nil, nil
 	}
 
 	authHeader := ctx.GetHeader(authHeader)
 	if authHeader == "" {
-		return "", errors.New("authorization header is not provided")
+		return nil, errors.New(sys.ErrAuthHeaderNotProvided)
 	}
 
 	if !strings.HasPrefix(authHeader, authPrefix) {
-		return "", errors.New("invalid authorization header format")
+		return nil, errors.New(sys.ErrInvalidAuthHeaderFormat)
 	}
 
 	accessToken := strings.TrimPrefix(authHeader, authPrefix)
 
 	claims, err := jwt.VerifyToken(accessToken, s.authConfig.AccessTokenSecretKey())
 	if err != nil {
-		return "", errors.New("access token is invalid")
+		return nil, errors.New(sys.ErrInvalidAccessToken)
 	}
 
-	return claims.Username, nil
+	user, err := s.userService.GetUserByName(ctx, claims.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

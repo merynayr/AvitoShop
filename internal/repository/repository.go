@@ -22,6 +22,4 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (int64, error)
 	UpdateUser(ctx context.Context, user *model.UserUpdate) error
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
-	IsExistByID(ctx context.Context, userID int64) (bool, error)
-	IsNameExist(ctx context.Context, name string) (bool, error)
 }
