@@ -1,3 +1,5 @@
 logs
 bin
 .vscode
+/coverage.out
+internal/service/shop/tests/logs/app.log

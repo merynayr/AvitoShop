@@ -10,22 +10,21 @@ import (
 	"github.com/merynayr/AvitoShop/internal/closer"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/config/env"
+	"github.com/merynayr/AvitoShop/internal/middleware/access"
 	"github.com/merynayr/AvitoShop/internal/repository"
 	"github.com/merynayr/AvitoShop/internal/service"
 
 	authAPI "github.com/merynayr/AvitoShop/internal/api/auth"
 	shopAPI "github.com/merynayr/AvitoShop/internal/api/shop"
-	userAPI "github.com/merynayr/AvitoShop/internal/api/user"
 
 	accessService "github.com/merynayr/AvitoShop/internal/service/access"
 	authService "github.com/merynayr/AvitoShop/internal/service/auth"
 	shopService "github.com/merynayr/AvitoShop/internal/service/shop"
-	userService "github.com/merynayr/AvitoShop/internal/service/user"
 
 	shopRepository "github.com/merynayr/AvitoShop/internal/repository/shop"
 	userRepository "github.com/merynayr/AvitoShop/internal/repository/user"
 
-	"github.com/merynayr/AvitoShop/internal/middleware/access"
+	"github.com/merynayr/AvitoShop/internal/middleware"
 )
 
 // Структура приложения со всеми зависимости
@@ -43,15 +42,12 @@ type serviceProvider struct {
 	shopAPI        *shopAPI.API
 	shopService    service.ShopService
 	shopRepository repository.ShopRepository
-
-	userAPI        *userAPI.API
-	userService    service.UserService
 	userRepository repository.UserRepository
 
 	authAPI     *authAPI.API
 	authService service.AuthService
 
-	middleware    *access.Middleware
+	middleware    middleware.UserMiddleware
 	accessService service.AccessService
 }
 
@@ -165,25 +161,6 @@ func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	return s.txManager
 }
 
-func (s *serviceProvider) ShopRepository(ctx context.Context) repository.ShopRepository {
-	if s.shopRepository == nil {
-		s.shopRepository = shopRepository.NewRepository(s.DBClient(ctx))
-	}
-
-	return s.shopRepository
-}
-
-func (s *serviceProvider) ShopService(ctx context.Context) service.ShopService {
-	if s.shopService == nil {
-		s.shopService = shopService.NewService(
-			s.ShopRepository(ctx),
-			s.TxManager(ctx),
-		)
-	}
-
-	return s.shopService
-}
-
 func (s *serviceProvider) ShopAPI(ctx context.Context) *shopAPI.API {
 	if s.shopAPI == nil {
 		s.shopAPI = shopAPI.NewAPI(s.ShopService(ctx))
@@ -192,32 +169,32 @@ func (s *serviceProvider) ShopAPI(ctx context.Context) *shopAPI.API {
 	return s.shopAPI
 }
 
-func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
-	if s.userRepository == nil {
-		s.userRepository = userRepository.NewRepository(s.DBClient(ctx))
-	}
-
-	return s.userRepository
-}
-
-func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
-	if s.userService == nil {
-		s.userService = userService.NewService(
+func (s *serviceProvider) ShopService(ctx context.Context) service.ShopService {
+	if s.shopService == nil {
+		s.shopService = shopService.NewService(
 			s.ShopRepository(ctx),
 			s.UserRepository(ctx),
 			s.TxManager(ctx),
 		)
 	}
 
-	return s.userService
+	return s.shopService
 }
 
-func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.API {
-	if s.userAPI == nil {
-		s.userAPI = userAPI.NewAPI(s.UserService(ctx), s.AccessMiddleware())
+func (s *serviceProvider) ShopRepository(ctx context.Context) repository.ShopRepository {
+	if s.shopRepository == nil {
+		s.shopRepository = shopRepository.NewRepository(s.DBClient(ctx))
 	}
 
-	return s.userAPI
+	return s.shopRepository
+}
+
+func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
+	if s.userRepository == nil {
+		s.userRepository = userRepository.NewRepository(s.DBClient(ctx))
+	}
+
+	return s.userRepository
 }
 
 // AuthAPI инициализирует api слой auth
@@ -242,22 +219,25 @@ func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 }
 
 // AccessMiddleware инициализирует middleware доступа
-func (s *serviceProvider) AccessMiddleware() *access.Middleware {
+func (s *serviceProvider) AccessMiddleware(ctx context.Context) middleware.UserMiddleware {
 	if s.middleware == nil {
-		s.middleware = access.NewMiddleware(s.UserService(context.Background()), s.AccessService(context.Background()), s.AuthConfig())
+		s.middleware = access.NewMiddleware(
+			s.AccessService(ctx),
+			s.AuthConfig(),
+		)
 	}
 	return s.middleware
 }
 
 // AccessService иницилизирует сервисный слой access
-func (s *serviceProvider) AccessService(_ context.Context) service.AccessService {
+func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
 	if s.accessService == nil {
 		uMap, err := s.AccessConfig().UserAccessesMap()
 		if err != nil {
 			log.Fatalf("failed to get user access map: %v", err)
 		}
 
-		s.accessService = accessService.NewService(uMap, s.AuthConfig())
+		s.accessService = accessService.NewService(s.ShopService(ctx), uMap, s.AuthConfig())
 	}
 
 	return s.accessService

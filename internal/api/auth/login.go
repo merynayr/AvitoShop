@@ -7,7 +7,6 @@ import (
 
 	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/sys"
-	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
 // Login аутентификация и получение JWT-токена
@@ -26,26 +25,17 @@ func (a *API) Login(c *gin.Context) {
 	var req model.AuthRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		sys.HandleError(c, sys.NewCommonError("invalid request", codes.BadRequest))
+		sys.HandleError(c, sys.InvalidRequestError)
 		return
 	}
 
-	refreshToken, err := a.authService.Login(c.Request.Context(), req.Username, req.Password)
+	authResponse, err := a.authService.Login(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		sys.HandleError(c, err)
 		return
 	}
 
-	accessToken, err := a.authService.GetAccessToken(c.Request.Context(), refreshToken)
-	if err != nil {
-		sys.HandleError(c, err)
-		return
-	}
+	a.setCookies(c, authResponse.RefreshToken, authResponse.AccessToken)
 
-	a.setCookies(c, refreshToken, accessToken)
-
-	c.JSON(http.StatusOK, model.AuthResponse{
-		RefreshToken: refreshToken,
-		AccessToken:  accessToken,
-	})
+	c.JSON(http.StatusOK, authResponse)
 }

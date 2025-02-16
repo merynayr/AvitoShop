@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/sys"
-	"github.com/merynayr/AvitoShop/internal/sys/codes"
 )
 
 // Info получает информацию о монетах, инвентаре и истории транзакций
@@ -25,17 +24,17 @@ import (
 func (a *API) Info(c *gin.Context) {
 	userCtx, exists := c.Get("user")
 	if !exists {
-		sys.HandleError(c, sys.NewCommonError("user not found", codes.Unauthorized))
+		sys.HandleError(c, sys.UserNotFoundError)
 		return
 	}
 
 	user, ok := userCtx.(*model.User)
 	if !ok {
-		sys.HandleError(c, fmt.Errorf("invalid user"))
+		sys.HandleError(c, fmt.Errorf(sys.ErrInvalidUser))
 		return
 	}
 
-	userInfo, err := a.userService.GetUserInfo(c.Request.Context(), user.ID)
+	userInfo, err := a.shopService.GetUserInfo(c, user)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

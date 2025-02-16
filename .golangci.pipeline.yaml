@@ -1,28 +1,16 @@
-# More info on config here: https://golangci-lint.run/usage/configuration/#config-file
 run:
   concurrency: 8
   timeout: 10m
   issues-exit-code: 1
   tests: true
-  issues:
-    exclude-files:
-      - \.pb\.go$
-      - \.pb\.gw\.go$
-    exclude-dirs:
-      - bin
-      - vendor
-      - var
-      - tmp
-      - .cache
 
 output:
-  formats: colored-line-number
+  formats:
+    - format: "colored-line-number"
   print-issued-lines: true
   print-linter-name: true
 
 linters-settings:
-  govet:
-    shadow: true
   dupl:
     threshold: 100
   goconst:
@@ -49,3 +37,12 @@ issues:
     - exported func .* returns unexported type .*, which can be annoying to use
     - should have a package comment
     - don't use an underscore in package name
+  exclude-files:
+    - \.pb\.go$
+    - \.pb\.gw\.go$
+  exclude-dirs:
+    - bin
+    - vendor
+    - var
+    - tmp
+    - .cache

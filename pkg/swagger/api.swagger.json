@@ -214,39 +214,19 @@
                     }
                 }
             }
-        },
-        "/api/user": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Получить информацию о монетах, инвентаре и истории транзакций",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "shop"
-                ],
-                "summary": "Получить информацию о монетах",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
         }
     },
     "definitions": {
         "model.AuthRequest": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                 },
                 "username": {
                     "type": "string"

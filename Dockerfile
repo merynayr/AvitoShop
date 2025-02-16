@@ -1,18 +1,18 @@
 FROM golang:1.23-alpine AS builder
 
-COPY . /github.com/merynayr/PingerVK/backend/source/
-WORKDIR /github.com/merynayr/PingerVK/backend/source/
+COPY . /github.com/merynayr/AvitoShop/source/
+WORKDIR /github.com/merynayr/AvitoShop/source/
 
 RUN go mod download
-RUN go build -o ./bin/httpserver cmd/main.go
+RUN go build -o ./bin/app cmd/main.go
 
 FROM alpine:latest
 
 
 WORKDIR /root/
 
-COPY --from=builder /github.com/merynayr/PingerVK/backend/source/bin/httpserver .
+COPY --from=builder /github.com/merynayr/AvitoShop/source/bin/app .
 
 COPY .env .
 
-CMD ["./httpserver", "-config-path=.env"]
+CMD ["./app", "-config-path=.env"]

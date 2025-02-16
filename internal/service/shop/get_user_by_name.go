@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/model"
 )
 
-func (s *userService) GetUserByName(ctx context.Context, name string) (*model.User, error) {
+func (s *shopService) GetUserByName(ctx context.Context, name string) (*model.User, error) {
 	user, err := s.userRepository.GetUserByName(ctx, name)
 	if err != nil {
 		return nil, err

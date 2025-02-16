@@ -17,7 +17,8 @@ import (
 type key string
 
 const (
-	TxKey key = "tx" // TxKey ключ для передачи транзакции в контекс
+	// TxKey ключ для передачи транзакции в контекс
+	TxKey key = "tx"
 )
 
 // pg структура с подключением к Postgres

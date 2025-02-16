@@ -7,6 +7,23 @@ on:
     branches: [ main, master ]
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v4
+
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: '1.23'
+            cache-dependency-path: go.sum
+
+        - name: Build
+          run: go build -o ./bin/ -v ./...
+
+        - name: Test
+          run: go test -v ./internal/tests/unit_tests/...
+
   linter:
     name: lint
     runs-on: ubuntu-latest
@@ -22,7 +39,7 @@ jobs:
           # Require: The version of golangci-lint to use.
           # When `install-mode` is `binary` (default) the value can be v1.2 or v1.2.3 or `latest` to use the latest version.
           # When `install-mode` is `goinstall` the value can be v1.2.3, `latest`, or the hash of a commit.
-          version: v1.61
+          version: v1.64
 
           # Optional: working directory, useful for monorepos
           # working-directory: somedir
