@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"fmt"
@@ -41,7 +41,7 @@ func (a *API) SendCoin(c *gin.Context) {
 		return
 	}
 
-	err := a.userService.SendCoins(c, user, &req)
+	err := a.shopService.SendCoins(c, user, &req)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

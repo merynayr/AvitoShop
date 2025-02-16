@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ func (a *API) Buy(c *gin.Context) {
 		return
 	}
 
-	err := a.userService.Buy(c, user, item)
+	err := a.shopService.Buy(c, user, item)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

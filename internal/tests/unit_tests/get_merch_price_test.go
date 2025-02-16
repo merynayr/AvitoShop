@@ -1,4 +1,4 @@
-package tests
+package unittests
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/service/shop"
 )
 
-func TestGetUserByName(t *testing.T) {
+func TestGetMerchPrice(t *testing.T) {
 	t.Parallel()
 
 	type shopRepositoryMockFunc func(mc *minimock.Controller) repository.ShopRepository
@@ -88,7 +88,7 @@ func TestGetUserByName(t *testing.T) {
 			shopRepoMock := tt.shopRepositoryMock(minimock.NewController(t))
 			txManagerMock := tt.txManagerMock(minimock.NewController(t))
 
-			service := shop.NewService(shopRepoMock, txManagerMock)
+			service := shop.NewService(shopRepoMock, nil, txManagerMock)
 			_, err := service.GetMerchPrice(tt.args.ctx, tt.args.req)
 
 			if tt.err != nil {

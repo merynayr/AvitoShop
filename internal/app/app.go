@@ -120,8 +120,8 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	router.Use(a.serviceProvider.middleware.AddAccessTokenFromCookie())
 	router.Use(a.serviceProvider.middleware.Check())
 
-	a.serviceProvider.UserAPI(ctx)
-	a.serviceProvider.userAPI.RegisterRoutes(router)
+	a.serviceProvider.ShopAPI(ctx)
+	a.serviceProvider.shopAPI.RegisterRoutes(router)
 
 	a.serviceProvider.AuthAPI(ctx)
 	a.serviceProvider.authAPI.RegisterRoutes(router)

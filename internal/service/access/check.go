@@ -38,7 +38,7 @@ func (s *srv) Check(ctx *gin.Context, endpointAddress string) (*model.User, erro
 		return nil, errors.New(sys.ErrInvalidAccessToken)
 	}
 
-	user, err := s.userService.GetUserByName(ctx, claims.Username)
+	user, err := s.shopService.GetUserByName(ctx, claims.Username)
 	if err != nil {
 		return nil, err
 	}

@@ -6,15 +6,15 @@ import (
 )
 
 type srv struct {
-	userService  service.UserService
+	shopService  service.ShopService
 	userAccesses map[string]struct{}
 	authConfig   config.AuthConfig
 }
 
 // NewService возвращает новый объект сервисного слоя access
-func NewService(userService service.UserService, userAccesses map[string]struct{}, authConfig config.AuthConfig) service.AccessService {
+func NewService(shopService service.ShopService, userAccesses map[string]struct{}, authConfig config.AuthConfig) service.AccessService {
 	return &srv{
-		userService:  userService,
+		shopService:  shopService,
 		userAccesses: userAccesses,
 		authConfig:   authConfig,
 	}

@@ -42,13 +42,15 @@ func (m *Middleware) Check() gin.HandlerFunc {
 // AddAccessTokenFromCookie - middleware, который извлекает токен доступа из куки и добавляет его в заголовок
 func (m *Middleware) AddAccessTokenFromCookie() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken, err := c.Cookie("access_token")
-		if err != nil {
-			c.Next()
-			return
-		}
+		if c.GetHeader("Authorization") == "" {
+			accessToken, err := c.Cookie("access_token")
+			if err != nil {
+				c.Next()
+				return
+			}
 
-		c.Request.Header.Set("Authorization", "Bearer "+accessToken)
+			c.Request.Header.Set("Authorization", "Bearer "+accessToken)
+		}
 		c.Next()
 	}
 }

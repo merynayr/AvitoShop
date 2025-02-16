@@ -1,8 +1,6 @@
-package user
+package shop
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/service"
 )
@@ -10,13 +8,13 @@ import (
 // API user структура
 // объект сервисного слоя (его интерфейса)
 type API struct {
-	userService service.UserService
+	shopService service.ShopService
 }
 
 // NewAPI возвращает новый объект имплементации API-слоя
-func NewAPI(userService service.UserService) *API {
+func NewAPI(shopService service.ShopService) *API {
 	return &API{
-		userService: userService,
+		shopService: shopService,
 	}
 }
 
@@ -24,14 +22,8 @@ func NewAPI(userService service.UserService) *API {
 func (api *API) RegisterRoutes(router *gin.Engine) {
 	userGroup := router.Group("/api")
 	{
-		userGroup.GET("/user", api.Health)
 		userGroup.POST("/sendCoin", api.SendCoin)
 		userGroup.GET("/buy/:item", api.Buy)
 		userGroup.GET("/info", api.Info)
 	}
-}
-
-// Health проверяет доступность сервиса
-func (api *API) Health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }

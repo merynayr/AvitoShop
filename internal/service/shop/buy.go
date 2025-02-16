@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/sys"
 )
 
-func (s *userService) Buy(ctx context.Context, user *model.User, item string) error {
+func (s *shopService) Buy(ctx context.Context, user *model.User, item string) error {
 	price, err := s.shopRepository.GetMerchPrice(ctx, item)
 	if err != nil {
 		return sys.ItemNotFoundError

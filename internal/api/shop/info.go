@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func (a *API) Info(c *gin.Context) {
 		return
 	}
 
-	userInfo, err := a.userService.GetUserInfo(c, user)
+	userInfo, err := a.shopService.GetUserInfo(c, user)
 	if err != nil {
 		sys.HandleError(c, err)
 		return

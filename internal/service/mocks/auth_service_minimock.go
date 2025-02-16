@@ -11,6 +11,7 @@ import (
 	mm_time "time"
 
 	"github.com/gojuno/minimock/v3"
+	"github.com/merynayr/AvitoShop/internal/model"
 )
 
 // AuthServiceMock implements mm_service.AuthService
@@ -32,9 +33,9 @@ type AuthServiceMock struct {
 	beforeGetRefreshTokenCounter uint64
 	GetRefreshTokenMock          mAuthServiceMockGetRefreshToken
 
-	funcLogin          func(ctx context.Context, name string, password string) (s1 string, err error)
+	funcLogin          func(ctx context.Context, username string, password string) (ap1 *model.AuthResponse, err error)
 	funcLoginOrigin    string
-	inspectFuncLogin   func(ctx context.Context, name string, password string)
+	inspectFuncLogin   func(ctx context.Context, username string, password string)
 	afterLoginCounter  uint64
 	beforeLoginCounter uint64
 	LoginMock          mAuthServiceMockLogin
@@ -775,20 +776,20 @@ type AuthServiceMockLoginExpectation struct {
 // AuthServiceMockLoginParams contains parameters of the AuthService.Login
 type AuthServiceMockLoginParams struct {
 	ctx      context.Context
-	name     string
+	username string
 	password string
 }
 
 // AuthServiceMockLoginParamPtrs contains pointers to parameters of the AuthService.Login
 type AuthServiceMockLoginParamPtrs struct {
 	ctx      *context.Context
-	name     *string
+	username *string
 	password *string
 }
 
 // AuthServiceMockLoginResults contains results of the AuthService.Login
 type AuthServiceMockLoginResults struct {
-	s1  string
+	ap1 *model.AuthResponse
 	err error
 }
 
@@ -796,7 +797,7 @@ type AuthServiceMockLoginResults struct {
 type AuthServiceMockLoginExpectationOrigins struct {
 	origin         string
 	originCtx      string
-	originName     string
+	originUsername string
 	originPassword string
 }
 
@@ -811,7 +812,7 @@ func (mmLogin *mAuthServiceMockLogin) Optional() *mAuthServiceMockLogin {
 }
 
 // Expect sets up expected params for AuthService.Login
-func (mmLogin *mAuthServiceMockLogin) Expect(ctx context.Context, name string, password string) *mAuthServiceMockLogin {
+func (mmLogin *mAuthServiceMockLogin) Expect(ctx context.Context, username string, password string) *mAuthServiceMockLogin {
 	if mmLogin.mock.funcLogin != nil {
 		mmLogin.mock.t.Fatalf("AuthServiceMock.Login mock is already set by Set")
 	}
@@ -824,7 +825,7 @@ func (mmLogin *mAuthServiceMockLogin) Expect(ctx context.Context, name string, p
 		mmLogin.mock.t.Fatalf("AuthServiceMock.Login mock is already set by ExpectParams functions")
 	}
 
-	mmLogin.defaultExpectation.params = &AuthServiceMockLoginParams{ctx, name, password}
+	mmLogin.defaultExpectation.params = &AuthServiceMockLoginParams{ctx, username, password}
 	mmLogin.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmLogin.expectations {
 		if minimock.Equal(e.params, mmLogin.defaultExpectation.params) {
@@ -858,8 +859,8 @@ func (mmLogin *mAuthServiceMockLogin) ExpectCtxParam1(ctx context.Context) *mAut
 	return mmLogin
 }
 
-// ExpectNameParam2 sets up expected param name for AuthService.Login
-func (mmLogin *mAuthServiceMockLogin) ExpectNameParam2(name string) *mAuthServiceMockLogin {
+// ExpectUsernameParam2 sets up expected param username for AuthService.Login
+func (mmLogin *mAuthServiceMockLogin) ExpectUsernameParam2(username string) *mAuthServiceMockLogin {
 	if mmLogin.mock.funcLogin != nil {
 		mmLogin.mock.t.Fatalf("AuthServiceMock.Login mock is already set by Set")
 	}
@@ -875,8 +876,8 @@ func (mmLogin *mAuthServiceMockLogin) ExpectNameParam2(name string) *mAuthServic
 	if mmLogin.defaultExpectation.paramPtrs == nil {
 		mmLogin.defaultExpectation.paramPtrs = &AuthServiceMockLoginParamPtrs{}
 	}
-	mmLogin.defaultExpectation.paramPtrs.name = &name
-	mmLogin.defaultExpectation.expectationOrigins.originName = minimock.CallerInfo(1)
+	mmLogin.defaultExpectation.paramPtrs.username = &username
+	mmLogin.defaultExpectation.expectationOrigins.originUsername = minimock.CallerInfo(1)
 
 	return mmLogin
 }
@@ -905,7 +906,7 @@ func (mmLogin *mAuthServiceMockLogin) ExpectPasswordParam3(password string) *mAu
 }
 
 // Inspect accepts an inspector function that has same arguments as the AuthService.Login
-func (mmLogin *mAuthServiceMockLogin) Inspect(f func(ctx context.Context, name string, password string)) *mAuthServiceMockLogin {
+func (mmLogin *mAuthServiceMockLogin) Inspect(f func(ctx context.Context, username string, password string)) *mAuthServiceMockLogin {
 	if mmLogin.mock.inspectFuncLogin != nil {
 		mmLogin.mock.t.Fatalf("Inspect function is already set for AuthServiceMock.Login")
 	}
@@ -916,7 +917,7 @@ func (mmLogin *mAuthServiceMockLogin) Inspect(f func(ctx context.Context, name s
 }
 
 // Return sets up results that will be returned by AuthService.Login
-func (mmLogin *mAuthServiceMockLogin) Return(s1 string, err error) *AuthServiceMock {
+func (mmLogin *mAuthServiceMockLogin) Return(ap1 *model.AuthResponse, err error) *AuthServiceMock {
 	if mmLogin.mock.funcLogin != nil {
 		mmLogin.mock.t.Fatalf("AuthServiceMock.Login mock is already set by Set")
 	}
@@ -924,13 +925,13 @@ func (mmLogin *mAuthServiceMockLogin) Return(s1 string, err error) *AuthServiceM
 	if mmLogin.defaultExpectation == nil {
 		mmLogin.defaultExpectation = &AuthServiceMockLoginExpectation{mock: mmLogin.mock}
 	}
-	mmLogin.defaultExpectation.results = &AuthServiceMockLoginResults{s1, err}
+	mmLogin.defaultExpectation.results = &AuthServiceMockLoginResults{ap1, err}
 	mmLogin.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
 	return mmLogin.mock
 }
 
 // Set uses given function f to mock the AuthService.Login method
-func (mmLogin *mAuthServiceMockLogin) Set(f func(ctx context.Context, name string, password string) (s1 string, err error)) *AuthServiceMock {
+func (mmLogin *mAuthServiceMockLogin) Set(f func(ctx context.Context, username string, password string) (ap1 *model.AuthResponse, err error)) *AuthServiceMock {
 	if mmLogin.defaultExpectation != nil {
 		mmLogin.mock.t.Fatalf("Default expectation is already set for the AuthService.Login method")
 	}
@@ -946,14 +947,14 @@ func (mmLogin *mAuthServiceMockLogin) Set(f func(ctx context.Context, name strin
 
 // When sets expectation for the AuthService.Login which will trigger the result defined by the following
 // Then helper
-func (mmLogin *mAuthServiceMockLogin) When(ctx context.Context, name string, password string) *AuthServiceMockLoginExpectation {
+func (mmLogin *mAuthServiceMockLogin) When(ctx context.Context, username string, password string) *AuthServiceMockLoginExpectation {
 	if mmLogin.mock.funcLogin != nil {
 		mmLogin.mock.t.Fatalf("AuthServiceMock.Login mock is already set by Set")
 	}
 
 	expectation := &AuthServiceMockLoginExpectation{
 		mock:               mmLogin.mock,
-		params:             &AuthServiceMockLoginParams{ctx, name, password},
+		params:             &AuthServiceMockLoginParams{ctx, username, password},
 		expectationOrigins: AuthServiceMockLoginExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmLogin.expectations = append(mmLogin.expectations, expectation)
@@ -961,8 +962,8 @@ func (mmLogin *mAuthServiceMockLogin) When(ctx context.Context, name string, pas
 }
 
 // Then sets up AuthService.Login return parameters for the expectation previously defined by the When method
-func (e *AuthServiceMockLoginExpectation) Then(s1 string, err error) *AuthServiceMock {
-	e.results = &AuthServiceMockLoginResults{s1, err}
+func (e *AuthServiceMockLoginExpectation) Then(ap1 *model.AuthResponse, err error) *AuthServiceMock {
+	e.results = &AuthServiceMockLoginResults{ap1, err}
 	return e.mock
 }
 
@@ -988,17 +989,17 @@ func (mmLogin *mAuthServiceMockLogin) invocationsDone() bool {
 }
 
 // Login implements mm_service.AuthService
-func (mmLogin *AuthServiceMock) Login(ctx context.Context, name string, password string) (s1 string, err error) {
+func (mmLogin *AuthServiceMock) Login(ctx context.Context, username string, password string) (ap1 *model.AuthResponse, err error) {
 	mm_atomic.AddUint64(&mmLogin.beforeLoginCounter, 1)
 	defer mm_atomic.AddUint64(&mmLogin.afterLoginCounter, 1)
 
 	mmLogin.t.Helper()
 
 	if mmLogin.inspectFuncLogin != nil {
-		mmLogin.inspectFuncLogin(ctx, name, password)
+		mmLogin.inspectFuncLogin(ctx, username, password)
 	}
 
-	mm_params := AuthServiceMockLoginParams{ctx, name, password}
+	mm_params := AuthServiceMockLoginParams{ctx, username, password}
 
 	// Record call args
 	mmLogin.LoginMock.mutex.Lock()
@@ -1008,7 +1009,7 @@ func (mmLogin *AuthServiceMock) Login(ctx context.Context, name string, password
 	for _, e := range mmLogin.LoginMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.s1, e.results.err
+			return e.results.ap1, e.results.err
 		}
 	}
 
@@ -1017,7 +1018,7 @@ func (mmLogin *AuthServiceMock) Login(ctx context.Context, name string, password
 		mm_want := mmLogin.LoginMock.defaultExpectation.params
 		mm_want_ptrs := mmLogin.LoginMock.defaultExpectation.paramPtrs
 
-		mm_got := AuthServiceMockLoginParams{ctx, name, password}
+		mm_got := AuthServiceMockLoginParams{ctx, username, password}
 
 		if mm_want_ptrs != nil {
 
@@ -1026,9 +1027,9 @@ func (mmLogin *AuthServiceMock) Login(ctx context.Context, name string, password
 					mmLogin.LoginMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
-			if mm_want_ptrs.name != nil && !minimock.Equal(*mm_want_ptrs.name, mm_got.name) {
-				mmLogin.t.Errorf("AuthServiceMock.Login got unexpected parameter name, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmLogin.LoginMock.defaultExpectation.expectationOrigins.originName, *mm_want_ptrs.name, mm_got.name, minimock.Diff(*mm_want_ptrs.name, mm_got.name))
+			if mm_want_ptrs.username != nil && !minimock.Equal(*mm_want_ptrs.username, mm_got.username) {
+				mmLogin.t.Errorf("AuthServiceMock.Login got unexpected parameter username, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmLogin.LoginMock.defaultExpectation.expectationOrigins.originUsername, *mm_want_ptrs.username, mm_got.username, minimock.Diff(*mm_want_ptrs.username, mm_got.username))
 			}
 
 			if mm_want_ptrs.password != nil && !minimock.Equal(*mm_want_ptrs.password, mm_got.password) {
@@ -1045,12 +1046,12 @@ func (mmLogin *AuthServiceMock) Login(ctx context.Context, name string, password
 		if mm_results == nil {
 			mmLogin.t.Fatal("No results are set for the AuthServiceMock.Login")
 		}
-		return (*mm_results).s1, (*mm_results).err
+		return (*mm_results).ap1, (*mm_results).err
 	}
 	if mmLogin.funcLogin != nil {
-		return mmLogin.funcLogin(ctx, name, password)
+		return mmLogin.funcLogin(ctx, username, password)
 	}
-	mmLogin.t.Fatalf("Unexpected call to AuthServiceMock.Login. %v %v %v", ctx, name, password)
+	mmLogin.t.Fatalf("Unexpected call to AuthServiceMock.Login. %v %v %v", ctx, username, password)
 	return
 }
 

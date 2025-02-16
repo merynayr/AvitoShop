@@ -10,16 +10,16 @@ swagger:
 	mv pkg/swagger/swagger.json pkg/swagger/api.swagger.json
 	$(LOCAL_BIN)/statik -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
+install-deps:
+	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 install-golangci-lint:
 	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
 
 lint:
+	go mod tidy
 	$(LOCAL_BIN)/golangci-lint run ./... --config .golangci.pipeline.yaml
-
-install-deps:
-	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.20.0
-	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 docker-build:
 	docker compose up --build -d
@@ -60,3 +60,6 @@ migration_for_test_up:
 
 migration_for_test_down:
 	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${TEST_MIGRATION_DSN} down -v
+
+load-testing:
+	k6 run internal/tests/load_test.js

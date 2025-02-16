@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/model"
 )
 
-func (s *userService) GetUserInfo(ctx context.Context, user *model.User) (*model.InfoResponse, error) {
+func (s *shopService) GetUserInfo(ctx context.Context, user *model.User) (*model.InfoResponse, error) {
 	items, err := s.shopRepository.GetUserInventory(ctx, user.ID)
 	if err != nil {
 		return &model.InfoResponse{}, err

@@ -11,6 +11,7 @@ import (
 	mm_time "time"
 
 	"github.com/gojuno/minimock/v3"
+	"github.com/merynayr/AvitoShop/internal/model"
 )
 
 // ShopServiceMock implements mm_service.ShopService
@@ -18,12 +19,40 @@ type ShopServiceMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcBuy          func(ctx context.Context, user *model.User, item string) (err error)
+	funcBuyOrigin    string
+	inspectFuncBuy   func(ctx context.Context, user *model.User, item string)
+	afterBuyCounter  uint64
+	beforeBuyCounter uint64
+	BuyMock          mShopServiceMockBuy
+
 	funcGetMerchPrice          func(ctx context.Context, item string) (i1 int64, err error)
 	funcGetMerchPriceOrigin    string
 	inspectFuncGetMerchPrice   func(ctx context.Context, item string)
 	afterGetMerchPriceCounter  uint64
 	beforeGetMerchPriceCounter uint64
 	GetMerchPriceMock          mShopServiceMockGetMerchPrice
+
+	funcGetUserByName          func(ctx context.Context, name string) (up1 *model.User, err error)
+	funcGetUserByNameOrigin    string
+	inspectFuncGetUserByName   func(ctx context.Context, name string)
+	afterGetUserByNameCounter  uint64
+	beforeGetUserByNameCounter uint64
+	GetUserByNameMock          mShopServiceMockGetUserByName
+
+	funcGetUserInfo          func(ctx context.Context, user *model.User) (ip1 *model.InfoResponse, err error)
+	funcGetUserInfoOrigin    string
+	inspectFuncGetUserInfo   func(ctx context.Context, user *model.User)
+	afterGetUserInfoCounter  uint64
+	beforeGetUserInfoCounter uint64
+	GetUserInfoMock          mShopServiceMockGetUserInfo
+
+	funcSendCoins          func(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) (err error)
+	funcSendCoinsOrigin    string
+	inspectFuncSendCoins   func(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest)
+	afterSendCoinsCounter  uint64
+	beforeSendCoinsCounter uint64
+	SendCoinsMock          mShopServiceMockSendCoins
 }
 
 // NewShopServiceMock returns a mock for mm_service.ShopService
@@ -34,12 +63,397 @@ func NewShopServiceMock(t minimock.Tester) *ShopServiceMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.BuyMock = mShopServiceMockBuy{mock: m}
+	m.BuyMock.callArgs = []*ShopServiceMockBuyParams{}
+
 	m.GetMerchPriceMock = mShopServiceMockGetMerchPrice{mock: m}
 	m.GetMerchPriceMock.callArgs = []*ShopServiceMockGetMerchPriceParams{}
+
+	m.GetUserByNameMock = mShopServiceMockGetUserByName{mock: m}
+	m.GetUserByNameMock.callArgs = []*ShopServiceMockGetUserByNameParams{}
+
+	m.GetUserInfoMock = mShopServiceMockGetUserInfo{mock: m}
+	m.GetUserInfoMock.callArgs = []*ShopServiceMockGetUserInfoParams{}
+
+	m.SendCoinsMock = mShopServiceMockSendCoins{mock: m}
+	m.SendCoinsMock.callArgs = []*ShopServiceMockSendCoinsParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mShopServiceMockBuy struct {
+	optional           bool
+	mock               *ShopServiceMock
+	defaultExpectation *ShopServiceMockBuyExpectation
+	expectations       []*ShopServiceMockBuyExpectation
+
+	callArgs []*ShopServiceMockBuyParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ShopServiceMockBuyExpectation specifies expectation struct of the ShopService.Buy
+type ShopServiceMockBuyExpectation struct {
+	mock               *ShopServiceMock
+	params             *ShopServiceMockBuyParams
+	paramPtrs          *ShopServiceMockBuyParamPtrs
+	expectationOrigins ShopServiceMockBuyExpectationOrigins
+	results            *ShopServiceMockBuyResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ShopServiceMockBuyParams contains parameters of the ShopService.Buy
+type ShopServiceMockBuyParams struct {
+	ctx  context.Context
+	user *model.User
+	item string
+}
+
+// ShopServiceMockBuyParamPtrs contains pointers to parameters of the ShopService.Buy
+type ShopServiceMockBuyParamPtrs struct {
+	ctx  *context.Context
+	user **model.User
+	item *string
+}
+
+// ShopServiceMockBuyResults contains results of the ShopService.Buy
+type ShopServiceMockBuyResults struct {
+	err error
+}
+
+// ShopServiceMockBuyOrigins contains origins of expectations of the ShopService.Buy
+type ShopServiceMockBuyExpectationOrigins struct {
+	origin     string
+	originCtx  string
+	originUser string
+	originItem string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmBuy *mShopServiceMockBuy) Optional() *mShopServiceMockBuy {
+	mmBuy.optional = true
+	return mmBuy
+}
+
+// Expect sets up expected params for ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) Expect(ctx context.Context, user *model.User, item string) *mShopServiceMockBuy {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	if mmBuy.defaultExpectation == nil {
+		mmBuy.defaultExpectation = &ShopServiceMockBuyExpectation{}
+	}
+
+	if mmBuy.defaultExpectation.paramPtrs != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by ExpectParams functions")
+	}
+
+	mmBuy.defaultExpectation.params = &ShopServiceMockBuyParams{ctx, user, item}
+	mmBuy.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmBuy.expectations {
+		if minimock.Equal(e.params, mmBuy.defaultExpectation.params) {
+			mmBuy.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmBuy.defaultExpectation.params)
+		}
+	}
+
+	return mmBuy
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) ExpectCtxParam1(ctx context.Context) *mShopServiceMockBuy {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	if mmBuy.defaultExpectation == nil {
+		mmBuy.defaultExpectation = &ShopServiceMockBuyExpectation{}
+	}
+
+	if mmBuy.defaultExpectation.params != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Expect")
+	}
+
+	if mmBuy.defaultExpectation.paramPtrs == nil {
+		mmBuy.defaultExpectation.paramPtrs = &ShopServiceMockBuyParamPtrs{}
+	}
+	mmBuy.defaultExpectation.paramPtrs.ctx = &ctx
+	mmBuy.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmBuy
+}
+
+// ExpectUserParam2 sets up expected param user for ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) ExpectUserParam2(user *model.User) *mShopServiceMockBuy {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	if mmBuy.defaultExpectation == nil {
+		mmBuy.defaultExpectation = &ShopServiceMockBuyExpectation{}
+	}
+
+	if mmBuy.defaultExpectation.params != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Expect")
+	}
+
+	if mmBuy.defaultExpectation.paramPtrs == nil {
+		mmBuy.defaultExpectation.paramPtrs = &ShopServiceMockBuyParamPtrs{}
+	}
+	mmBuy.defaultExpectation.paramPtrs.user = &user
+	mmBuy.defaultExpectation.expectationOrigins.originUser = minimock.CallerInfo(1)
+
+	return mmBuy
+}
+
+// ExpectItemParam3 sets up expected param item for ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) ExpectItemParam3(item string) *mShopServiceMockBuy {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	if mmBuy.defaultExpectation == nil {
+		mmBuy.defaultExpectation = &ShopServiceMockBuyExpectation{}
+	}
+
+	if mmBuy.defaultExpectation.params != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Expect")
+	}
+
+	if mmBuy.defaultExpectation.paramPtrs == nil {
+		mmBuy.defaultExpectation.paramPtrs = &ShopServiceMockBuyParamPtrs{}
+	}
+	mmBuy.defaultExpectation.paramPtrs.item = &item
+	mmBuy.defaultExpectation.expectationOrigins.originItem = minimock.CallerInfo(1)
+
+	return mmBuy
+}
+
+// Inspect accepts an inspector function that has same arguments as the ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) Inspect(f func(ctx context.Context, user *model.User, item string)) *mShopServiceMockBuy {
+	if mmBuy.mock.inspectFuncBuy != nil {
+		mmBuy.mock.t.Fatalf("Inspect function is already set for ShopServiceMock.Buy")
+	}
+
+	mmBuy.mock.inspectFuncBuy = f
+
+	return mmBuy
+}
+
+// Return sets up results that will be returned by ShopService.Buy
+func (mmBuy *mShopServiceMockBuy) Return(err error) *ShopServiceMock {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	if mmBuy.defaultExpectation == nil {
+		mmBuy.defaultExpectation = &ShopServiceMockBuyExpectation{mock: mmBuy.mock}
+	}
+	mmBuy.defaultExpectation.results = &ShopServiceMockBuyResults{err}
+	mmBuy.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmBuy.mock
+}
+
+// Set uses given function f to mock the ShopService.Buy method
+func (mmBuy *mShopServiceMockBuy) Set(f func(ctx context.Context, user *model.User, item string) (err error)) *ShopServiceMock {
+	if mmBuy.defaultExpectation != nil {
+		mmBuy.mock.t.Fatalf("Default expectation is already set for the ShopService.Buy method")
+	}
+
+	if len(mmBuy.expectations) > 0 {
+		mmBuy.mock.t.Fatalf("Some expectations are already set for the ShopService.Buy method")
+	}
+
+	mmBuy.mock.funcBuy = f
+	mmBuy.mock.funcBuyOrigin = minimock.CallerInfo(1)
+	return mmBuy.mock
+}
+
+// When sets expectation for the ShopService.Buy which will trigger the result defined by the following
+// Then helper
+func (mmBuy *mShopServiceMockBuy) When(ctx context.Context, user *model.User, item string) *ShopServiceMockBuyExpectation {
+	if mmBuy.mock.funcBuy != nil {
+		mmBuy.mock.t.Fatalf("ShopServiceMock.Buy mock is already set by Set")
+	}
+
+	expectation := &ShopServiceMockBuyExpectation{
+		mock:               mmBuy.mock,
+		params:             &ShopServiceMockBuyParams{ctx, user, item},
+		expectationOrigins: ShopServiceMockBuyExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmBuy.expectations = append(mmBuy.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ShopService.Buy return parameters for the expectation previously defined by the When method
+func (e *ShopServiceMockBuyExpectation) Then(err error) *ShopServiceMock {
+	e.results = &ShopServiceMockBuyResults{err}
+	return e.mock
+}
+
+// Times sets number of times ShopService.Buy should be invoked
+func (mmBuy *mShopServiceMockBuy) Times(n uint64) *mShopServiceMockBuy {
+	if n == 0 {
+		mmBuy.mock.t.Fatalf("Times of ShopServiceMock.Buy mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmBuy.expectedInvocations, n)
+	mmBuy.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmBuy
+}
+
+func (mmBuy *mShopServiceMockBuy) invocationsDone() bool {
+	if len(mmBuy.expectations) == 0 && mmBuy.defaultExpectation == nil && mmBuy.mock.funcBuy == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmBuy.mock.afterBuyCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmBuy.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// Buy implements mm_service.ShopService
+func (mmBuy *ShopServiceMock) Buy(ctx context.Context, user *model.User, item string) (err error) {
+	mm_atomic.AddUint64(&mmBuy.beforeBuyCounter, 1)
+	defer mm_atomic.AddUint64(&mmBuy.afterBuyCounter, 1)
+
+	mmBuy.t.Helper()
+
+	if mmBuy.inspectFuncBuy != nil {
+		mmBuy.inspectFuncBuy(ctx, user, item)
+	}
+
+	mm_params := ShopServiceMockBuyParams{ctx, user, item}
+
+	// Record call args
+	mmBuy.BuyMock.mutex.Lock()
+	mmBuy.BuyMock.callArgs = append(mmBuy.BuyMock.callArgs, &mm_params)
+	mmBuy.BuyMock.mutex.Unlock()
+
+	for _, e := range mmBuy.BuyMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmBuy.BuyMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmBuy.BuyMock.defaultExpectation.Counter, 1)
+		mm_want := mmBuy.BuyMock.defaultExpectation.params
+		mm_want_ptrs := mmBuy.BuyMock.defaultExpectation.paramPtrs
+
+		mm_got := ShopServiceMockBuyParams{ctx, user, item}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmBuy.t.Errorf("ShopServiceMock.Buy got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmBuy.BuyMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.user != nil && !minimock.Equal(*mm_want_ptrs.user, mm_got.user) {
+				mmBuy.t.Errorf("ShopServiceMock.Buy got unexpected parameter user, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmBuy.BuyMock.defaultExpectation.expectationOrigins.originUser, *mm_want_ptrs.user, mm_got.user, minimock.Diff(*mm_want_ptrs.user, mm_got.user))
+			}
+
+			if mm_want_ptrs.item != nil && !minimock.Equal(*mm_want_ptrs.item, mm_got.item) {
+				mmBuy.t.Errorf("ShopServiceMock.Buy got unexpected parameter item, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmBuy.BuyMock.defaultExpectation.expectationOrigins.originItem, *mm_want_ptrs.item, mm_got.item, minimock.Diff(*mm_want_ptrs.item, mm_got.item))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmBuy.t.Errorf("ShopServiceMock.Buy got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmBuy.BuyMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmBuy.BuyMock.defaultExpectation.results
+		if mm_results == nil {
+			mmBuy.t.Fatal("No results are set for the ShopServiceMock.Buy")
+		}
+		return (*mm_results).err
+	}
+	if mmBuy.funcBuy != nil {
+		return mmBuy.funcBuy(ctx, user, item)
+	}
+	mmBuy.t.Fatalf("Unexpected call to ShopServiceMock.Buy. %v %v %v", ctx, user, item)
+	return
+}
+
+// BuyAfterCounter returns a count of finished ShopServiceMock.Buy invocations
+func (mmBuy *ShopServiceMock) BuyAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmBuy.afterBuyCounter)
+}
+
+// BuyBeforeCounter returns a count of ShopServiceMock.Buy invocations
+func (mmBuy *ShopServiceMock) BuyBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmBuy.beforeBuyCounter)
+}
+
+// Calls returns a list of arguments used in each call to ShopServiceMock.Buy.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmBuy *mShopServiceMockBuy) Calls() []*ShopServiceMockBuyParams {
+	mmBuy.mutex.RLock()
+
+	argCopy := make([]*ShopServiceMockBuyParams, len(mmBuy.callArgs))
+	copy(argCopy, mmBuy.callArgs)
+
+	mmBuy.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockBuyDone returns true if the count of the Buy invocations corresponds
+// the number of defined expectations
+func (m *ShopServiceMock) MinimockBuyDone() bool {
+	if m.BuyMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.BuyMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.BuyMock.invocationsDone()
+}
+
+// MinimockBuyInspect logs each unmet expectation
+func (m *ShopServiceMock) MinimockBuyInspect() {
+	for _, e := range m.BuyMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ShopServiceMock.Buy at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterBuyCounter := mm_atomic.LoadUint64(&m.afterBuyCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.BuyMock.defaultExpectation != nil && afterBuyCounter < 1 {
+		if m.BuyMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ShopServiceMock.Buy at\n%s", m.BuyMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ShopServiceMock.Buy at\n%s with params: %#v", m.BuyMock.defaultExpectation.expectationOrigins.origin, *m.BuyMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcBuy != nil && afterBuyCounter < 1 {
+		m.t.Errorf("Expected call to ShopServiceMock.Buy at\n%s", m.funcBuyOrigin)
+	}
+
+	if !m.BuyMock.invocationsDone() && afterBuyCounter > 0 {
+		m.t.Errorf("Expected %d calls to ShopServiceMock.Buy at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.BuyMock.expectedInvocations), m.BuyMock.expectedInvocationsOrigin, afterBuyCounter)
+	}
 }
 
 type mShopServiceMockGetMerchPrice struct {
@@ -385,11 +799,1078 @@ func (m *ShopServiceMock) MinimockGetMerchPriceInspect() {
 	}
 }
 
+type mShopServiceMockGetUserByName struct {
+	optional           bool
+	mock               *ShopServiceMock
+	defaultExpectation *ShopServiceMockGetUserByNameExpectation
+	expectations       []*ShopServiceMockGetUserByNameExpectation
+
+	callArgs []*ShopServiceMockGetUserByNameParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ShopServiceMockGetUserByNameExpectation specifies expectation struct of the ShopService.GetUserByName
+type ShopServiceMockGetUserByNameExpectation struct {
+	mock               *ShopServiceMock
+	params             *ShopServiceMockGetUserByNameParams
+	paramPtrs          *ShopServiceMockGetUserByNameParamPtrs
+	expectationOrigins ShopServiceMockGetUserByNameExpectationOrigins
+	results            *ShopServiceMockGetUserByNameResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ShopServiceMockGetUserByNameParams contains parameters of the ShopService.GetUserByName
+type ShopServiceMockGetUserByNameParams struct {
+	ctx  context.Context
+	name string
+}
+
+// ShopServiceMockGetUserByNameParamPtrs contains pointers to parameters of the ShopService.GetUserByName
+type ShopServiceMockGetUserByNameParamPtrs struct {
+	ctx  *context.Context
+	name *string
+}
+
+// ShopServiceMockGetUserByNameResults contains results of the ShopService.GetUserByName
+type ShopServiceMockGetUserByNameResults struct {
+	up1 *model.User
+	err error
+}
+
+// ShopServiceMockGetUserByNameOrigins contains origins of expectations of the ShopService.GetUserByName
+type ShopServiceMockGetUserByNameExpectationOrigins struct {
+	origin     string
+	originCtx  string
+	originName string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGetUserByName *mShopServiceMockGetUserByName) Optional() *mShopServiceMockGetUserByName {
+	mmGetUserByName.optional = true
+	return mmGetUserByName
+}
+
+// Expect sets up expected params for ShopService.GetUserByName
+func (mmGetUserByName *mShopServiceMockGetUserByName) Expect(ctx context.Context, name string) *mShopServiceMockGetUserByName {
+	if mmGetUserByName.mock.funcGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Set")
+	}
+
+	if mmGetUserByName.defaultExpectation == nil {
+		mmGetUserByName.defaultExpectation = &ShopServiceMockGetUserByNameExpectation{}
+	}
+
+	if mmGetUserByName.defaultExpectation.paramPtrs != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by ExpectParams functions")
+	}
+
+	mmGetUserByName.defaultExpectation.params = &ShopServiceMockGetUserByNameParams{ctx, name}
+	mmGetUserByName.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGetUserByName.expectations {
+		if minimock.Equal(e.params, mmGetUserByName.defaultExpectation.params) {
+			mmGetUserByName.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUserByName.defaultExpectation.params)
+		}
+	}
+
+	return mmGetUserByName
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ShopService.GetUserByName
+func (mmGetUserByName *mShopServiceMockGetUserByName) ExpectCtxParam1(ctx context.Context) *mShopServiceMockGetUserByName {
+	if mmGetUserByName.mock.funcGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Set")
+	}
+
+	if mmGetUserByName.defaultExpectation == nil {
+		mmGetUserByName.defaultExpectation = &ShopServiceMockGetUserByNameExpectation{}
+	}
+
+	if mmGetUserByName.defaultExpectation.params != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Expect")
+	}
+
+	if mmGetUserByName.defaultExpectation.paramPtrs == nil {
+		mmGetUserByName.defaultExpectation.paramPtrs = &ShopServiceMockGetUserByNameParamPtrs{}
+	}
+	mmGetUserByName.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetUserByName.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetUserByName
+}
+
+// ExpectNameParam2 sets up expected param name for ShopService.GetUserByName
+func (mmGetUserByName *mShopServiceMockGetUserByName) ExpectNameParam2(name string) *mShopServiceMockGetUserByName {
+	if mmGetUserByName.mock.funcGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Set")
+	}
+
+	if mmGetUserByName.defaultExpectation == nil {
+		mmGetUserByName.defaultExpectation = &ShopServiceMockGetUserByNameExpectation{}
+	}
+
+	if mmGetUserByName.defaultExpectation.params != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Expect")
+	}
+
+	if mmGetUserByName.defaultExpectation.paramPtrs == nil {
+		mmGetUserByName.defaultExpectation.paramPtrs = &ShopServiceMockGetUserByNameParamPtrs{}
+	}
+	mmGetUserByName.defaultExpectation.paramPtrs.name = &name
+	mmGetUserByName.defaultExpectation.expectationOrigins.originName = minimock.CallerInfo(1)
+
+	return mmGetUserByName
+}
+
+// Inspect accepts an inspector function that has same arguments as the ShopService.GetUserByName
+func (mmGetUserByName *mShopServiceMockGetUserByName) Inspect(f func(ctx context.Context, name string)) *mShopServiceMockGetUserByName {
+	if mmGetUserByName.mock.inspectFuncGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("Inspect function is already set for ShopServiceMock.GetUserByName")
+	}
+
+	mmGetUserByName.mock.inspectFuncGetUserByName = f
+
+	return mmGetUserByName
+}
+
+// Return sets up results that will be returned by ShopService.GetUserByName
+func (mmGetUserByName *mShopServiceMockGetUserByName) Return(up1 *model.User, err error) *ShopServiceMock {
+	if mmGetUserByName.mock.funcGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Set")
+	}
+
+	if mmGetUserByName.defaultExpectation == nil {
+		mmGetUserByName.defaultExpectation = &ShopServiceMockGetUserByNameExpectation{mock: mmGetUserByName.mock}
+	}
+	mmGetUserByName.defaultExpectation.results = &ShopServiceMockGetUserByNameResults{up1, err}
+	mmGetUserByName.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGetUserByName.mock
+}
+
+// Set uses given function f to mock the ShopService.GetUserByName method
+func (mmGetUserByName *mShopServiceMockGetUserByName) Set(f func(ctx context.Context, name string) (up1 *model.User, err error)) *ShopServiceMock {
+	if mmGetUserByName.defaultExpectation != nil {
+		mmGetUserByName.mock.t.Fatalf("Default expectation is already set for the ShopService.GetUserByName method")
+	}
+
+	if len(mmGetUserByName.expectations) > 0 {
+		mmGetUserByName.mock.t.Fatalf("Some expectations are already set for the ShopService.GetUserByName method")
+	}
+
+	mmGetUserByName.mock.funcGetUserByName = f
+	mmGetUserByName.mock.funcGetUserByNameOrigin = minimock.CallerInfo(1)
+	return mmGetUserByName.mock
+}
+
+// When sets expectation for the ShopService.GetUserByName which will trigger the result defined by the following
+// Then helper
+func (mmGetUserByName *mShopServiceMockGetUserByName) When(ctx context.Context, name string) *ShopServiceMockGetUserByNameExpectation {
+	if mmGetUserByName.mock.funcGetUserByName != nil {
+		mmGetUserByName.mock.t.Fatalf("ShopServiceMock.GetUserByName mock is already set by Set")
+	}
+
+	expectation := &ShopServiceMockGetUserByNameExpectation{
+		mock:               mmGetUserByName.mock,
+		params:             &ShopServiceMockGetUserByNameParams{ctx, name},
+		expectationOrigins: ShopServiceMockGetUserByNameExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGetUserByName.expectations = append(mmGetUserByName.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ShopService.GetUserByName return parameters for the expectation previously defined by the When method
+func (e *ShopServiceMockGetUserByNameExpectation) Then(up1 *model.User, err error) *ShopServiceMock {
+	e.results = &ShopServiceMockGetUserByNameResults{up1, err}
+	return e.mock
+}
+
+// Times sets number of times ShopService.GetUserByName should be invoked
+func (mmGetUserByName *mShopServiceMockGetUserByName) Times(n uint64) *mShopServiceMockGetUserByName {
+	if n == 0 {
+		mmGetUserByName.mock.t.Fatalf("Times of ShopServiceMock.GetUserByName mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGetUserByName.expectedInvocations, n)
+	mmGetUserByName.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGetUserByName
+}
+
+func (mmGetUserByName *mShopServiceMockGetUserByName) invocationsDone() bool {
+	if len(mmGetUserByName.expectations) == 0 && mmGetUserByName.defaultExpectation == nil && mmGetUserByName.mock.funcGetUserByName == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGetUserByName.mock.afterGetUserByNameCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGetUserByName.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GetUserByName implements mm_service.ShopService
+func (mmGetUserByName *ShopServiceMock) GetUserByName(ctx context.Context, name string) (up1 *model.User, err error) {
+	mm_atomic.AddUint64(&mmGetUserByName.beforeGetUserByNameCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetUserByName.afterGetUserByNameCounter, 1)
+
+	mmGetUserByName.t.Helper()
+
+	if mmGetUserByName.inspectFuncGetUserByName != nil {
+		mmGetUserByName.inspectFuncGetUserByName(ctx, name)
+	}
+
+	mm_params := ShopServiceMockGetUserByNameParams{ctx, name}
+
+	// Record call args
+	mmGetUserByName.GetUserByNameMock.mutex.Lock()
+	mmGetUserByName.GetUserByNameMock.callArgs = append(mmGetUserByName.GetUserByNameMock.callArgs, &mm_params)
+	mmGetUserByName.GetUserByNameMock.mutex.Unlock()
+
+	for _, e := range mmGetUserByName.GetUserByNameMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.up1, e.results.err
+		}
+	}
+
+	if mmGetUserByName.GetUserByNameMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetUserByName.GetUserByNameMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetUserByName.GetUserByNameMock.defaultExpectation.params
+		mm_want_ptrs := mmGetUserByName.GetUserByNameMock.defaultExpectation.paramPtrs
+
+		mm_got := ShopServiceMockGetUserByNameParams{ctx, name}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetUserByName.t.Errorf("ShopServiceMock.GetUserByName got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserByName.GetUserByNameMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.name != nil && !minimock.Equal(*mm_want_ptrs.name, mm_got.name) {
+				mmGetUserByName.t.Errorf("ShopServiceMock.GetUserByName got unexpected parameter name, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserByName.GetUserByNameMock.defaultExpectation.expectationOrigins.originName, *mm_want_ptrs.name, mm_got.name, minimock.Diff(*mm_want_ptrs.name, mm_got.name))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetUserByName.t.Errorf("ShopServiceMock.GetUserByName got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGetUserByName.GetUserByNameMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetUserByName.GetUserByNameMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetUserByName.t.Fatal("No results are set for the ShopServiceMock.GetUserByName")
+		}
+		return (*mm_results).up1, (*mm_results).err
+	}
+	if mmGetUserByName.funcGetUserByName != nil {
+		return mmGetUserByName.funcGetUserByName(ctx, name)
+	}
+	mmGetUserByName.t.Fatalf("Unexpected call to ShopServiceMock.GetUserByName. %v %v", ctx, name)
+	return
+}
+
+// GetUserByNameAfterCounter returns a count of finished ShopServiceMock.GetUserByName invocations
+func (mmGetUserByName *ShopServiceMock) GetUserByNameAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByName.afterGetUserByNameCounter)
+}
+
+// GetUserByNameBeforeCounter returns a count of ShopServiceMock.GetUserByName invocations
+func (mmGetUserByName *ShopServiceMock) GetUserByNameBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByName.beforeGetUserByNameCounter)
+}
+
+// Calls returns a list of arguments used in each call to ShopServiceMock.GetUserByName.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetUserByName *mShopServiceMockGetUserByName) Calls() []*ShopServiceMockGetUserByNameParams {
+	mmGetUserByName.mutex.RLock()
+
+	argCopy := make([]*ShopServiceMockGetUserByNameParams, len(mmGetUserByName.callArgs))
+	copy(argCopy, mmGetUserByName.callArgs)
+
+	mmGetUserByName.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetUserByNameDone returns true if the count of the GetUserByName invocations corresponds
+// the number of defined expectations
+func (m *ShopServiceMock) MinimockGetUserByNameDone() bool {
+	if m.GetUserByNameMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetUserByNameMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetUserByNameMock.invocationsDone()
+}
+
+// MinimockGetUserByNameInspect logs each unmet expectation
+func (m *ShopServiceMock) MinimockGetUserByNameInspect() {
+	for _, e := range m.GetUserByNameMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserByName at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGetUserByNameCounter := mm_atomic.LoadUint64(&m.afterGetUserByNameCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUserByNameMock.defaultExpectation != nil && afterGetUserByNameCounter < 1 {
+		if m.GetUserByNameMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserByName at\n%s", m.GetUserByNameMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserByName at\n%s with params: %#v", m.GetUserByNameMock.defaultExpectation.expectationOrigins.origin, *m.GetUserByNameMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUserByName != nil && afterGetUserByNameCounter < 1 {
+		m.t.Errorf("Expected call to ShopServiceMock.GetUserByName at\n%s", m.funcGetUserByNameOrigin)
+	}
+
+	if !m.GetUserByNameMock.invocationsDone() && afterGetUserByNameCounter > 0 {
+		m.t.Errorf("Expected %d calls to ShopServiceMock.GetUserByName at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GetUserByNameMock.expectedInvocations), m.GetUserByNameMock.expectedInvocationsOrigin, afterGetUserByNameCounter)
+	}
+}
+
+type mShopServiceMockGetUserInfo struct {
+	optional           bool
+	mock               *ShopServiceMock
+	defaultExpectation *ShopServiceMockGetUserInfoExpectation
+	expectations       []*ShopServiceMockGetUserInfoExpectation
+
+	callArgs []*ShopServiceMockGetUserInfoParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ShopServiceMockGetUserInfoExpectation specifies expectation struct of the ShopService.GetUserInfo
+type ShopServiceMockGetUserInfoExpectation struct {
+	mock               *ShopServiceMock
+	params             *ShopServiceMockGetUserInfoParams
+	paramPtrs          *ShopServiceMockGetUserInfoParamPtrs
+	expectationOrigins ShopServiceMockGetUserInfoExpectationOrigins
+	results            *ShopServiceMockGetUserInfoResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ShopServiceMockGetUserInfoParams contains parameters of the ShopService.GetUserInfo
+type ShopServiceMockGetUserInfoParams struct {
+	ctx  context.Context
+	user *model.User
+}
+
+// ShopServiceMockGetUserInfoParamPtrs contains pointers to parameters of the ShopService.GetUserInfo
+type ShopServiceMockGetUserInfoParamPtrs struct {
+	ctx  *context.Context
+	user **model.User
+}
+
+// ShopServiceMockGetUserInfoResults contains results of the ShopService.GetUserInfo
+type ShopServiceMockGetUserInfoResults struct {
+	ip1 *model.InfoResponse
+	err error
+}
+
+// ShopServiceMockGetUserInfoOrigins contains origins of expectations of the ShopService.GetUserInfo
+type ShopServiceMockGetUserInfoExpectationOrigins struct {
+	origin     string
+	originCtx  string
+	originUser string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Optional() *mShopServiceMockGetUserInfo {
+	mmGetUserInfo.optional = true
+	return mmGetUserInfo
+}
+
+// Expect sets up expected params for ShopService.GetUserInfo
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Expect(ctx context.Context, user *model.User) *mShopServiceMockGetUserInfo {
+	if mmGetUserInfo.mock.funcGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Set")
+	}
+
+	if mmGetUserInfo.defaultExpectation == nil {
+		mmGetUserInfo.defaultExpectation = &ShopServiceMockGetUserInfoExpectation{}
+	}
+
+	if mmGetUserInfo.defaultExpectation.paramPtrs != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by ExpectParams functions")
+	}
+
+	mmGetUserInfo.defaultExpectation.params = &ShopServiceMockGetUserInfoParams{ctx, user}
+	mmGetUserInfo.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGetUserInfo.expectations {
+		if minimock.Equal(e.params, mmGetUserInfo.defaultExpectation.params) {
+			mmGetUserInfo.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUserInfo.defaultExpectation.params)
+		}
+	}
+
+	return mmGetUserInfo
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ShopService.GetUserInfo
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) ExpectCtxParam1(ctx context.Context) *mShopServiceMockGetUserInfo {
+	if mmGetUserInfo.mock.funcGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Set")
+	}
+
+	if mmGetUserInfo.defaultExpectation == nil {
+		mmGetUserInfo.defaultExpectation = &ShopServiceMockGetUserInfoExpectation{}
+	}
+
+	if mmGetUserInfo.defaultExpectation.params != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Expect")
+	}
+
+	if mmGetUserInfo.defaultExpectation.paramPtrs == nil {
+		mmGetUserInfo.defaultExpectation.paramPtrs = &ShopServiceMockGetUserInfoParamPtrs{}
+	}
+	mmGetUserInfo.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetUserInfo.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetUserInfo
+}
+
+// ExpectUserParam2 sets up expected param user for ShopService.GetUserInfo
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) ExpectUserParam2(user *model.User) *mShopServiceMockGetUserInfo {
+	if mmGetUserInfo.mock.funcGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Set")
+	}
+
+	if mmGetUserInfo.defaultExpectation == nil {
+		mmGetUserInfo.defaultExpectation = &ShopServiceMockGetUserInfoExpectation{}
+	}
+
+	if mmGetUserInfo.defaultExpectation.params != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Expect")
+	}
+
+	if mmGetUserInfo.defaultExpectation.paramPtrs == nil {
+		mmGetUserInfo.defaultExpectation.paramPtrs = &ShopServiceMockGetUserInfoParamPtrs{}
+	}
+	mmGetUserInfo.defaultExpectation.paramPtrs.user = &user
+	mmGetUserInfo.defaultExpectation.expectationOrigins.originUser = minimock.CallerInfo(1)
+
+	return mmGetUserInfo
+}
+
+// Inspect accepts an inspector function that has same arguments as the ShopService.GetUserInfo
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Inspect(f func(ctx context.Context, user *model.User)) *mShopServiceMockGetUserInfo {
+	if mmGetUserInfo.mock.inspectFuncGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("Inspect function is already set for ShopServiceMock.GetUserInfo")
+	}
+
+	mmGetUserInfo.mock.inspectFuncGetUserInfo = f
+
+	return mmGetUserInfo
+}
+
+// Return sets up results that will be returned by ShopService.GetUserInfo
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Return(ip1 *model.InfoResponse, err error) *ShopServiceMock {
+	if mmGetUserInfo.mock.funcGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Set")
+	}
+
+	if mmGetUserInfo.defaultExpectation == nil {
+		mmGetUserInfo.defaultExpectation = &ShopServiceMockGetUserInfoExpectation{mock: mmGetUserInfo.mock}
+	}
+	mmGetUserInfo.defaultExpectation.results = &ShopServiceMockGetUserInfoResults{ip1, err}
+	mmGetUserInfo.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGetUserInfo.mock
+}
+
+// Set uses given function f to mock the ShopService.GetUserInfo method
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Set(f func(ctx context.Context, user *model.User) (ip1 *model.InfoResponse, err error)) *ShopServiceMock {
+	if mmGetUserInfo.defaultExpectation != nil {
+		mmGetUserInfo.mock.t.Fatalf("Default expectation is already set for the ShopService.GetUserInfo method")
+	}
+
+	if len(mmGetUserInfo.expectations) > 0 {
+		mmGetUserInfo.mock.t.Fatalf("Some expectations are already set for the ShopService.GetUserInfo method")
+	}
+
+	mmGetUserInfo.mock.funcGetUserInfo = f
+	mmGetUserInfo.mock.funcGetUserInfoOrigin = minimock.CallerInfo(1)
+	return mmGetUserInfo.mock
+}
+
+// When sets expectation for the ShopService.GetUserInfo which will trigger the result defined by the following
+// Then helper
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) When(ctx context.Context, user *model.User) *ShopServiceMockGetUserInfoExpectation {
+	if mmGetUserInfo.mock.funcGetUserInfo != nil {
+		mmGetUserInfo.mock.t.Fatalf("ShopServiceMock.GetUserInfo mock is already set by Set")
+	}
+
+	expectation := &ShopServiceMockGetUserInfoExpectation{
+		mock:               mmGetUserInfo.mock,
+		params:             &ShopServiceMockGetUserInfoParams{ctx, user},
+		expectationOrigins: ShopServiceMockGetUserInfoExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGetUserInfo.expectations = append(mmGetUserInfo.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ShopService.GetUserInfo return parameters for the expectation previously defined by the When method
+func (e *ShopServiceMockGetUserInfoExpectation) Then(ip1 *model.InfoResponse, err error) *ShopServiceMock {
+	e.results = &ShopServiceMockGetUserInfoResults{ip1, err}
+	return e.mock
+}
+
+// Times sets number of times ShopService.GetUserInfo should be invoked
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Times(n uint64) *mShopServiceMockGetUserInfo {
+	if n == 0 {
+		mmGetUserInfo.mock.t.Fatalf("Times of ShopServiceMock.GetUserInfo mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGetUserInfo.expectedInvocations, n)
+	mmGetUserInfo.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGetUserInfo
+}
+
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) invocationsDone() bool {
+	if len(mmGetUserInfo.expectations) == 0 && mmGetUserInfo.defaultExpectation == nil && mmGetUserInfo.mock.funcGetUserInfo == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGetUserInfo.mock.afterGetUserInfoCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGetUserInfo.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GetUserInfo implements mm_service.ShopService
+func (mmGetUserInfo *ShopServiceMock) GetUserInfo(ctx context.Context, user *model.User) (ip1 *model.InfoResponse, err error) {
+	mm_atomic.AddUint64(&mmGetUserInfo.beforeGetUserInfoCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetUserInfo.afterGetUserInfoCounter, 1)
+
+	mmGetUserInfo.t.Helper()
+
+	if mmGetUserInfo.inspectFuncGetUserInfo != nil {
+		mmGetUserInfo.inspectFuncGetUserInfo(ctx, user)
+	}
+
+	mm_params := ShopServiceMockGetUserInfoParams{ctx, user}
+
+	// Record call args
+	mmGetUserInfo.GetUserInfoMock.mutex.Lock()
+	mmGetUserInfo.GetUserInfoMock.callArgs = append(mmGetUserInfo.GetUserInfoMock.callArgs, &mm_params)
+	mmGetUserInfo.GetUserInfoMock.mutex.Unlock()
+
+	for _, e := range mmGetUserInfo.GetUserInfoMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.ip1, e.results.err
+		}
+	}
+
+	if mmGetUserInfo.GetUserInfoMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetUserInfo.GetUserInfoMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetUserInfo.GetUserInfoMock.defaultExpectation.params
+		mm_want_ptrs := mmGetUserInfo.GetUserInfoMock.defaultExpectation.paramPtrs
+
+		mm_got := ShopServiceMockGetUserInfoParams{ctx, user}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetUserInfo.t.Errorf("ShopServiceMock.GetUserInfo got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserInfo.GetUserInfoMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.user != nil && !minimock.Equal(*mm_want_ptrs.user, mm_got.user) {
+				mmGetUserInfo.t.Errorf("ShopServiceMock.GetUserInfo got unexpected parameter user, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserInfo.GetUserInfoMock.defaultExpectation.expectationOrigins.originUser, *mm_want_ptrs.user, mm_got.user, minimock.Diff(*mm_want_ptrs.user, mm_got.user))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetUserInfo.t.Errorf("ShopServiceMock.GetUserInfo got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGetUserInfo.GetUserInfoMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetUserInfo.GetUserInfoMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetUserInfo.t.Fatal("No results are set for the ShopServiceMock.GetUserInfo")
+		}
+		return (*mm_results).ip1, (*mm_results).err
+	}
+	if mmGetUserInfo.funcGetUserInfo != nil {
+		return mmGetUserInfo.funcGetUserInfo(ctx, user)
+	}
+	mmGetUserInfo.t.Fatalf("Unexpected call to ShopServiceMock.GetUserInfo. %v %v", ctx, user)
+	return
+}
+
+// GetUserInfoAfterCounter returns a count of finished ShopServiceMock.GetUserInfo invocations
+func (mmGetUserInfo *ShopServiceMock) GetUserInfoAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserInfo.afterGetUserInfoCounter)
+}
+
+// GetUserInfoBeforeCounter returns a count of ShopServiceMock.GetUserInfo invocations
+func (mmGetUserInfo *ShopServiceMock) GetUserInfoBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserInfo.beforeGetUserInfoCounter)
+}
+
+// Calls returns a list of arguments used in each call to ShopServiceMock.GetUserInfo.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetUserInfo *mShopServiceMockGetUserInfo) Calls() []*ShopServiceMockGetUserInfoParams {
+	mmGetUserInfo.mutex.RLock()
+
+	argCopy := make([]*ShopServiceMockGetUserInfoParams, len(mmGetUserInfo.callArgs))
+	copy(argCopy, mmGetUserInfo.callArgs)
+
+	mmGetUserInfo.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetUserInfoDone returns true if the count of the GetUserInfo invocations corresponds
+// the number of defined expectations
+func (m *ShopServiceMock) MinimockGetUserInfoDone() bool {
+	if m.GetUserInfoMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetUserInfoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetUserInfoMock.invocationsDone()
+}
+
+// MinimockGetUserInfoInspect logs each unmet expectation
+func (m *ShopServiceMock) MinimockGetUserInfoInspect() {
+	for _, e := range m.GetUserInfoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserInfo at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGetUserInfoCounter := mm_atomic.LoadUint64(&m.afterGetUserInfoCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUserInfoMock.defaultExpectation != nil && afterGetUserInfoCounter < 1 {
+		if m.GetUserInfoMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserInfo at\n%s", m.GetUserInfoMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ShopServiceMock.GetUserInfo at\n%s with params: %#v", m.GetUserInfoMock.defaultExpectation.expectationOrigins.origin, *m.GetUserInfoMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUserInfo != nil && afterGetUserInfoCounter < 1 {
+		m.t.Errorf("Expected call to ShopServiceMock.GetUserInfo at\n%s", m.funcGetUserInfoOrigin)
+	}
+
+	if !m.GetUserInfoMock.invocationsDone() && afterGetUserInfoCounter > 0 {
+		m.t.Errorf("Expected %d calls to ShopServiceMock.GetUserInfo at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GetUserInfoMock.expectedInvocations), m.GetUserInfoMock.expectedInvocationsOrigin, afterGetUserInfoCounter)
+	}
+}
+
+type mShopServiceMockSendCoins struct {
+	optional           bool
+	mock               *ShopServiceMock
+	defaultExpectation *ShopServiceMockSendCoinsExpectation
+	expectations       []*ShopServiceMockSendCoinsExpectation
+
+	callArgs []*ShopServiceMockSendCoinsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ShopServiceMockSendCoinsExpectation specifies expectation struct of the ShopService.SendCoins
+type ShopServiceMockSendCoinsExpectation struct {
+	mock               *ShopServiceMock
+	params             *ShopServiceMockSendCoinsParams
+	paramPtrs          *ShopServiceMockSendCoinsParamPtrs
+	expectationOrigins ShopServiceMockSendCoinsExpectationOrigins
+	results            *ShopServiceMockSendCoinsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ShopServiceMockSendCoinsParams contains parameters of the ShopService.SendCoins
+type ShopServiceMockSendCoinsParams struct {
+	ctx       context.Context
+	fromUser  *model.User
+	sendCoins *model.SendCoinRequest
+}
+
+// ShopServiceMockSendCoinsParamPtrs contains pointers to parameters of the ShopService.SendCoins
+type ShopServiceMockSendCoinsParamPtrs struct {
+	ctx       *context.Context
+	fromUser  **model.User
+	sendCoins **model.SendCoinRequest
+}
+
+// ShopServiceMockSendCoinsResults contains results of the ShopService.SendCoins
+type ShopServiceMockSendCoinsResults struct {
+	err error
+}
+
+// ShopServiceMockSendCoinsOrigins contains origins of expectations of the ShopService.SendCoins
+type ShopServiceMockSendCoinsExpectationOrigins struct {
+	origin          string
+	originCtx       string
+	originFromUser  string
+	originSendCoins string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmSendCoins *mShopServiceMockSendCoins) Optional() *mShopServiceMockSendCoins {
+	mmSendCoins.optional = true
+	return mmSendCoins
+}
+
+// Expect sets up expected params for ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) Expect(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) *mShopServiceMockSendCoins {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	if mmSendCoins.defaultExpectation == nil {
+		mmSendCoins.defaultExpectation = &ShopServiceMockSendCoinsExpectation{}
+	}
+
+	if mmSendCoins.defaultExpectation.paramPtrs != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by ExpectParams functions")
+	}
+
+	mmSendCoins.defaultExpectation.params = &ShopServiceMockSendCoinsParams{ctx, fromUser, sendCoins}
+	mmSendCoins.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmSendCoins.expectations {
+		if minimock.Equal(e.params, mmSendCoins.defaultExpectation.params) {
+			mmSendCoins.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSendCoins.defaultExpectation.params)
+		}
+	}
+
+	return mmSendCoins
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) ExpectCtxParam1(ctx context.Context) *mShopServiceMockSendCoins {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	if mmSendCoins.defaultExpectation == nil {
+		mmSendCoins.defaultExpectation = &ShopServiceMockSendCoinsExpectation{}
+	}
+
+	if mmSendCoins.defaultExpectation.params != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Expect")
+	}
+
+	if mmSendCoins.defaultExpectation.paramPtrs == nil {
+		mmSendCoins.defaultExpectation.paramPtrs = &ShopServiceMockSendCoinsParamPtrs{}
+	}
+	mmSendCoins.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSendCoins.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSendCoins
+}
+
+// ExpectFromUserParam2 sets up expected param fromUser for ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) ExpectFromUserParam2(fromUser *model.User) *mShopServiceMockSendCoins {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	if mmSendCoins.defaultExpectation == nil {
+		mmSendCoins.defaultExpectation = &ShopServiceMockSendCoinsExpectation{}
+	}
+
+	if mmSendCoins.defaultExpectation.params != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Expect")
+	}
+
+	if mmSendCoins.defaultExpectation.paramPtrs == nil {
+		mmSendCoins.defaultExpectation.paramPtrs = &ShopServiceMockSendCoinsParamPtrs{}
+	}
+	mmSendCoins.defaultExpectation.paramPtrs.fromUser = &fromUser
+	mmSendCoins.defaultExpectation.expectationOrigins.originFromUser = minimock.CallerInfo(1)
+
+	return mmSendCoins
+}
+
+// ExpectSendCoinsParam3 sets up expected param sendCoins for ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) ExpectSendCoinsParam3(sendCoins *model.SendCoinRequest) *mShopServiceMockSendCoins {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	if mmSendCoins.defaultExpectation == nil {
+		mmSendCoins.defaultExpectation = &ShopServiceMockSendCoinsExpectation{}
+	}
+
+	if mmSendCoins.defaultExpectation.params != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Expect")
+	}
+
+	if mmSendCoins.defaultExpectation.paramPtrs == nil {
+		mmSendCoins.defaultExpectation.paramPtrs = &ShopServiceMockSendCoinsParamPtrs{}
+	}
+	mmSendCoins.defaultExpectation.paramPtrs.sendCoins = &sendCoins
+	mmSendCoins.defaultExpectation.expectationOrigins.originSendCoins = minimock.CallerInfo(1)
+
+	return mmSendCoins
+}
+
+// Inspect accepts an inspector function that has same arguments as the ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) Inspect(f func(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest)) *mShopServiceMockSendCoins {
+	if mmSendCoins.mock.inspectFuncSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("Inspect function is already set for ShopServiceMock.SendCoins")
+	}
+
+	mmSendCoins.mock.inspectFuncSendCoins = f
+
+	return mmSendCoins
+}
+
+// Return sets up results that will be returned by ShopService.SendCoins
+func (mmSendCoins *mShopServiceMockSendCoins) Return(err error) *ShopServiceMock {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	if mmSendCoins.defaultExpectation == nil {
+		mmSendCoins.defaultExpectation = &ShopServiceMockSendCoinsExpectation{mock: mmSendCoins.mock}
+	}
+	mmSendCoins.defaultExpectation.results = &ShopServiceMockSendCoinsResults{err}
+	mmSendCoins.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmSendCoins.mock
+}
+
+// Set uses given function f to mock the ShopService.SendCoins method
+func (mmSendCoins *mShopServiceMockSendCoins) Set(f func(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) (err error)) *ShopServiceMock {
+	if mmSendCoins.defaultExpectation != nil {
+		mmSendCoins.mock.t.Fatalf("Default expectation is already set for the ShopService.SendCoins method")
+	}
+
+	if len(mmSendCoins.expectations) > 0 {
+		mmSendCoins.mock.t.Fatalf("Some expectations are already set for the ShopService.SendCoins method")
+	}
+
+	mmSendCoins.mock.funcSendCoins = f
+	mmSendCoins.mock.funcSendCoinsOrigin = minimock.CallerInfo(1)
+	return mmSendCoins.mock
+}
+
+// When sets expectation for the ShopService.SendCoins which will trigger the result defined by the following
+// Then helper
+func (mmSendCoins *mShopServiceMockSendCoins) When(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) *ShopServiceMockSendCoinsExpectation {
+	if mmSendCoins.mock.funcSendCoins != nil {
+		mmSendCoins.mock.t.Fatalf("ShopServiceMock.SendCoins mock is already set by Set")
+	}
+
+	expectation := &ShopServiceMockSendCoinsExpectation{
+		mock:               mmSendCoins.mock,
+		params:             &ShopServiceMockSendCoinsParams{ctx, fromUser, sendCoins},
+		expectationOrigins: ShopServiceMockSendCoinsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmSendCoins.expectations = append(mmSendCoins.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ShopService.SendCoins return parameters for the expectation previously defined by the When method
+func (e *ShopServiceMockSendCoinsExpectation) Then(err error) *ShopServiceMock {
+	e.results = &ShopServiceMockSendCoinsResults{err}
+	return e.mock
+}
+
+// Times sets number of times ShopService.SendCoins should be invoked
+func (mmSendCoins *mShopServiceMockSendCoins) Times(n uint64) *mShopServiceMockSendCoins {
+	if n == 0 {
+		mmSendCoins.mock.t.Fatalf("Times of ShopServiceMock.SendCoins mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmSendCoins.expectedInvocations, n)
+	mmSendCoins.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmSendCoins
+}
+
+func (mmSendCoins *mShopServiceMockSendCoins) invocationsDone() bool {
+	if len(mmSendCoins.expectations) == 0 && mmSendCoins.defaultExpectation == nil && mmSendCoins.mock.funcSendCoins == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmSendCoins.mock.afterSendCoinsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmSendCoins.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// SendCoins implements mm_service.ShopService
+func (mmSendCoins *ShopServiceMock) SendCoins(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) (err error) {
+	mm_atomic.AddUint64(&mmSendCoins.beforeSendCoinsCounter, 1)
+	defer mm_atomic.AddUint64(&mmSendCoins.afterSendCoinsCounter, 1)
+
+	mmSendCoins.t.Helper()
+
+	if mmSendCoins.inspectFuncSendCoins != nil {
+		mmSendCoins.inspectFuncSendCoins(ctx, fromUser, sendCoins)
+	}
+
+	mm_params := ShopServiceMockSendCoinsParams{ctx, fromUser, sendCoins}
+
+	// Record call args
+	mmSendCoins.SendCoinsMock.mutex.Lock()
+	mmSendCoins.SendCoinsMock.callArgs = append(mmSendCoins.SendCoinsMock.callArgs, &mm_params)
+	mmSendCoins.SendCoinsMock.mutex.Unlock()
+
+	for _, e := range mmSendCoins.SendCoinsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmSendCoins.SendCoinsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSendCoins.SendCoinsMock.defaultExpectation.Counter, 1)
+		mm_want := mmSendCoins.SendCoinsMock.defaultExpectation.params
+		mm_want_ptrs := mmSendCoins.SendCoinsMock.defaultExpectation.paramPtrs
+
+		mm_got := ShopServiceMockSendCoinsParams{ctx, fromUser, sendCoins}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSendCoins.t.Errorf("ShopServiceMock.SendCoins got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSendCoins.SendCoinsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.fromUser != nil && !minimock.Equal(*mm_want_ptrs.fromUser, mm_got.fromUser) {
+				mmSendCoins.t.Errorf("ShopServiceMock.SendCoins got unexpected parameter fromUser, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSendCoins.SendCoinsMock.defaultExpectation.expectationOrigins.originFromUser, *mm_want_ptrs.fromUser, mm_got.fromUser, minimock.Diff(*mm_want_ptrs.fromUser, mm_got.fromUser))
+			}
+
+			if mm_want_ptrs.sendCoins != nil && !minimock.Equal(*mm_want_ptrs.sendCoins, mm_got.sendCoins) {
+				mmSendCoins.t.Errorf("ShopServiceMock.SendCoins got unexpected parameter sendCoins, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSendCoins.SendCoinsMock.defaultExpectation.expectationOrigins.originSendCoins, *mm_want_ptrs.sendCoins, mm_got.sendCoins, minimock.Diff(*mm_want_ptrs.sendCoins, mm_got.sendCoins))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmSendCoins.t.Errorf("ShopServiceMock.SendCoins got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmSendCoins.SendCoinsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmSendCoins.SendCoinsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmSendCoins.t.Fatal("No results are set for the ShopServiceMock.SendCoins")
+		}
+		return (*mm_results).err
+	}
+	if mmSendCoins.funcSendCoins != nil {
+		return mmSendCoins.funcSendCoins(ctx, fromUser, sendCoins)
+	}
+	mmSendCoins.t.Fatalf("Unexpected call to ShopServiceMock.SendCoins. %v %v %v", ctx, fromUser, sendCoins)
+	return
+}
+
+// SendCoinsAfterCounter returns a count of finished ShopServiceMock.SendCoins invocations
+func (mmSendCoins *ShopServiceMock) SendCoinsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSendCoins.afterSendCoinsCounter)
+}
+
+// SendCoinsBeforeCounter returns a count of ShopServiceMock.SendCoins invocations
+func (mmSendCoins *ShopServiceMock) SendCoinsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSendCoins.beforeSendCoinsCounter)
+}
+
+// Calls returns a list of arguments used in each call to ShopServiceMock.SendCoins.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmSendCoins *mShopServiceMockSendCoins) Calls() []*ShopServiceMockSendCoinsParams {
+	mmSendCoins.mutex.RLock()
+
+	argCopy := make([]*ShopServiceMockSendCoinsParams, len(mmSendCoins.callArgs))
+	copy(argCopy, mmSendCoins.callArgs)
+
+	mmSendCoins.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockSendCoinsDone returns true if the count of the SendCoins invocations corresponds
+// the number of defined expectations
+func (m *ShopServiceMock) MinimockSendCoinsDone() bool {
+	if m.SendCoinsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.SendCoinsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.SendCoinsMock.invocationsDone()
+}
+
+// MinimockSendCoinsInspect logs each unmet expectation
+func (m *ShopServiceMock) MinimockSendCoinsInspect() {
+	for _, e := range m.SendCoinsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ShopServiceMock.SendCoins at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterSendCoinsCounter := mm_atomic.LoadUint64(&m.afterSendCoinsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.SendCoinsMock.defaultExpectation != nil && afterSendCoinsCounter < 1 {
+		if m.SendCoinsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ShopServiceMock.SendCoins at\n%s", m.SendCoinsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ShopServiceMock.SendCoins at\n%s with params: %#v", m.SendCoinsMock.defaultExpectation.expectationOrigins.origin, *m.SendCoinsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcSendCoins != nil && afterSendCoinsCounter < 1 {
+		m.t.Errorf("Expected call to ShopServiceMock.SendCoins at\n%s", m.funcSendCoinsOrigin)
+	}
+
+	if !m.SendCoinsMock.invocationsDone() && afterSendCoinsCounter > 0 {
+		m.t.Errorf("Expected %d calls to ShopServiceMock.SendCoins at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.SendCoinsMock.expectedInvocations), m.SendCoinsMock.expectedInvocationsOrigin, afterSendCoinsCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *ShopServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockBuyInspect()
+
 			m.MinimockGetMerchPriceInspect()
+
+			m.MinimockGetUserByNameInspect()
+
+			m.MinimockGetUserInfoInspect()
+
+			m.MinimockSendCoinsInspect()
 		}
 	})
 }
@@ -413,5 +1894,9 @@ func (m *ShopServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *ShopServiceMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockGetMerchPriceDone()
+		m.MinimockBuyDone() &&
+		m.MinimockGetMerchPriceDone() &&
+		m.MinimockGetUserByNameDone() &&
+		m.MinimockGetUserInfoDone() &&
+		m.MinimockSendCoinsDone()
 }

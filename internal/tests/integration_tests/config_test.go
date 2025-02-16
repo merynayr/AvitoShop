@@ -15,7 +15,7 @@ import (
 	shopRepo "github.com/merynayr/AvitoShop/internal/repository/shop"
 	userRepo "github.com/merynayr/AvitoShop/internal/repository/user"
 	"github.com/merynayr/AvitoShop/internal/service"
-	userService "github.com/merynayr/AvitoShop/internal/service/user"
+	shopService "github.com/merynayr/AvitoShop/internal/service/shop"
 )
 
 var (
@@ -66,11 +66,11 @@ func (s *MyNewIntegrationSuite) TearDownTest() {
 	}
 }
 
-func (s *MyNewIntegrationSuite) SetupTest() service.UserService {
+func (s *MyNewIntegrationSuite) SetupTest() service.ShopService {
 	txManager := transaction.NewTransactionManager(s.r.DB())
 	userRepo := userRepo.NewRepository(s.r)
 	shopRepo := shopRepo.NewRepository(s.r)
-	userSrv := userService.NewService(shopRepo, userRepo, txManager)
+	userSrv := shopService.NewService(shopRepo, userRepo, txManager)
 	return userSrv
 }
 

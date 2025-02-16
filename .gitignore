@@ -2,4 +2,4 @@ logs
 bin
 .vscode
 /coverage.out
-internal/service/user/tests/logs/app.log
+internal/service/shop/tests/logs/app.log

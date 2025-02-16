@@ -11,3 +11,4 @@ RUN chmod +x /bin/goose
 COPY migrations /migrations
 
 CMD ["sh", "-c", "sleep 2 && goose -dir \"${MIGRATION_DIR}\" postgres \"${MIGRATION_DSN}\" up"]
+

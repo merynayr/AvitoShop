@@ -31,13 +31,6 @@ type UserMiddlewareMock struct {
 	afterCheckCounter  uint64
 	beforeCheckCounter uint64
 	CheckMock          mUserMiddlewareMockCheck
-
-	funcExtractUserID          func() (h1 gin.HandlerFunc)
-	funcExtractUserIDOrigin    string
-	inspectFuncExtractUserID   func()
-	afterExtractUserIDCounter  uint64
-	beforeExtractUserIDCounter uint64
-	ExtractUserIDMock          mUserMiddlewareMockExtractUserID
 }
 
 // NewUserMiddlewareMock returns a mock for mm_middleware.UserMiddleware
@@ -51,8 +44,6 @@ func NewUserMiddlewareMock(t minimock.Tester) *UserMiddlewareMock {
 	m.AddAccessTokenFromCookieMock = mUserMiddlewareMockAddAccessTokenFromCookie{mock: m}
 
 	m.CheckMock = mUserMiddlewareMockCheck{mock: m}
-
-	m.ExtractUserIDMock = mUserMiddlewareMockExtractUserID{mock: m}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -431,192 +422,6 @@ func (m *UserMiddlewareMock) MinimockCheckInspect() {
 	}
 }
 
-type mUserMiddlewareMockExtractUserID struct {
-	optional           bool
-	mock               *UserMiddlewareMock
-	defaultExpectation *UserMiddlewareMockExtractUserIDExpectation
-	expectations       []*UserMiddlewareMockExtractUserIDExpectation
-
-	expectedInvocations       uint64
-	expectedInvocationsOrigin string
-}
-
-// UserMiddlewareMockExtractUserIDExpectation specifies expectation struct of the UserMiddleware.ExtractUserID
-type UserMiddlewareMockExtractUserIDExpectation struct {
-	mock *UserMiddlewareMock
-
-	results      *UserMiddlewareMockExtractUserIDResults
-	returnOrigin string
-	Counter      uint64
-}
-
-// UserMiddlewareMockExtractUserIDResults contains results of the UserMiddleware.ExtractUserID
-type UserMiddlewareMockExtractUserIDResults struct {
-	h1 gin.HandlerFunc
-}
-
-// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
-// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
-// Optional() makes method check to work in '0 or more' mode.
-// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
-// catch the problems when the expected method call is totally skipped during test run.
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Optional() *mUserMiddlewareMockExtractUserID {
-	mmExtractUserID.optional = true
-	return mmExtractUserID
-}
-
-// Expect sets up expected params for UserMiddleware.ExtractUserID
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Expect() *mUserMiddlewareMockExtractUserID {
-	if mmExtractUserID.mock.funcExtractUserID != nil {
-		mmExtractUserID.mock.t.Fatalf("UserMiddlewareMock.ExtractUserID mock is already set by Set")
-	}
-
-	if mmExtractUserID.defaultExpectation == nil {
-		mmExtractUserID.defaultExpectation = &UserMiddlewareMockExtractUserIDExpectation{}
-	}
-
-	return mmExtractUserID
-}
-
-// Inspect accepts an inspector function that has same arguments as the UserMiddleware.ExtractUserID
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Inspect(f func()) *mUserMiddlewareMockExtractUserID {
-	if mmExtractUserID.mock.inspectFuncExtractUserID != nil {
-		mmExtractUserID.mock.t.Fatalf("Inspect function is already set for UserMiddlewareMock.ExtractUserID")
-	}
-
-	mmExtractUserID.mock.inspectFuncExtractUserID = f
-
-	return mmExtractUserID
-}
-
-// Return sets up results that will be returned by UserMiddleware.ExtractUserID
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Return(h1 gin.HandlerFunc) *UserMiddlewareMock {
-	if mmExtractUserID.mock.funcExtractUserID != nil {
-		mmExtractUserID.mock.t.Fatalf("UserMiddlewareMock.ExtractUserID mock is already set by Set")
-	}
-
-	if mmExtractUserID.defaultExpectation == nil {
-		mmExtractUserID.defaultExpectation = &UserMiddlewareMockExtractUserIDExpectation{mock: mmExtractUserID.mock}
-	}
-	mmExtractUserID.defaultExpectation.results = &UserMiddlewareMockExtractUserIDResults{h1}
-	mmExtractUserID.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
-	return mmExtractUserID.mock
-}
-
-// Set uses given function f to mock the UserMiddleware.ExtractUserID method
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Set(f func() (h1 gin.HandlerFunc)) *UserMiddlewareMock {
-	if mmExtractUserID.defaultExpectation != nil {
-		mmExtractUserID.mock.t.Fatalf("Default expectation is already set for the UserMiddleware.ExtractUserID method")
-	}
-
-	if len(mmExtractUserID.expectations) > 0 {
-		mmExtractUserID.mock.t.Fatalf("Some expectations are already set for the UserMiddleware.ExtractUserID method")
-	}
-
-	mmExtractUserID.mock.funcExtractUserID = f
-	mmExtractUserID.mock.funcExtractUserIDOrigin = minimock.CallerInfo(1)
-	return mmExtractUserID.mock
-}
-
-// Times sets number of times UserMiddleware.ExtractUserID should be invoked
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) Times(n uint64) *mUserMiddlewareMockExtractUserID {
-	if n == 0 {
-		mmExtractUserID.mock.t.Fatalf("Times of UserMiddlewareMock.ExtractUserID mock can not be zero")
-	}
-	mm_atomic.StoreUint64(&mmExtractUserID.expectedInvocations, n)
-	mmExtractUserID.expectedInvocationsOrigin = minimock.CallerInfo(1)
-	return mmExtractUserID
-}
-
-func (mmExtractUserID *mUserMiddlewareMockExtractUserID) invocationsDone() bool {
-	if len(mmExtractUserID.expectations) == 0 && mmExtractUserID.defaultExpectation == nil && mmExtractUserID.mock.funcExtractUserID == nil {
-		return true
-	}
-
-	totalInvocations := mm_atomic.LoadUint64(&mmExtractUserID.mock.afterExtractUserIDCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmExtractUserID.expectedInvocations)
-
-	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
-}
-
-// ExtractUserID implements mm_middleware.UserMiddleware
-func (mmExtractUserID *UserMiddlewareMock) ExtractUserID() (h1 gin.HandlerFunc) {
-	mm_atomic.AddUint64(&mmExtractUserID.beforeExtractUserIDCounter, 1)
-	defer mm_atomic.AddUint64(&mmExtractUserID.afterExtractUserIDCounter, 1)
-
-	mmExtractUserID.t.Helper()
-
-	if mmExtractUserID.inspectFuncExtractUserID != nil {
-		mmExtractUserID.inspectFuncExtractUserID()
-	}
-
-	if mmExtractUserID.ExtractUserIDMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmExtractUserID.ExtractUserIDMock.defaultExpectation.Counter, 1)
-
-		mm_results := mmExtractUserID.ExtractUserIDMock.defaultExpectation.results
-		if mm_results == nil {
-			mmExtractUserID.t.Fatal("No results are set for the UserMiddlewareMock.ExtractUserID")
-		}
-		return (*mm_results).h1
-	}
-	if mmExtractUserID.funcExtractUserID != nil {
-		return mmExtractUserID.funcExtractUserID()
-	}
-	mmExtractUserID.t.Fatalf("Unexpected call to UserMiddlewareMock.ExtractUserID.")
-	return
-}
-
-// ExtractUserIDAfterCounter returns a count of finished UserMiddlewareMock.ExtractUserID invocations
-func (mmExtractUserID *UserMiddlewareMock) ExtractUserIDAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmExtractUserID.afterExtractUserIDCounter)
-}
-
-// ExtractUserIDBeforeCounter returns a count of UserMiddlewareMock.ExtractUserID invocations
-func (mmExtractUserID *UserMiddlewareMock) ExtractUserIDBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmExtractUserID.beforeExtractUserIDCounter)
-}
-
-// MinimockExtractUserIDDone returns true if the count of the ExtractUserID invocations corresponds
-// the number of defined expectations
-func (m *UserMiddlewareMock) MinimockExtractUserIDDone() bool {
-	if m.ExtractUserIDMock.optional {
-		// Optional methods provide '0 or more' call count restriction.
-		return true
-	}
-
-	for _, e := range m.ExtractUserIDMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			return false
-		}
-	}
-
-	return m.ExtractUserIDMock.invocationsDone()
-}
-
-// MinimockExtractUserIDInspect logs each unmet expectation
-func (m *UserMiddlewareMock) MinimockExtractUserIDInspect() {
-	for _, e := range m.ExtractUserIDMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Error("Expected call to UserMiddlewareMock.ExtractUserID")
-		}
-	}
-
-	afterExtractUserIDCounter := mm_atomic.LoadUint64(&m.afterExtractUserIDCounter)
-	// if default expectation was set then invocations count should be greater than zero
-	if m.ExtractUserIDMock.defaultExpectation != nil && afterExtractUserIDCounter < 1 {
-		m.t.Errorf("Expected call to UserMiddlewareMock.ExtractUserID at\n%s", m.ExtractUserIDMock.defaultExpectation.returnOrigin)
-	}
-	// if func was set then invocations count should be greater than zero
-	if m.funcExtractUserID != nil && afterExtractUserIDCounter < 1 {
-		m.t.Errorf("Expected call to UserMiddlewareMock.ExtractUserID at\n%s", m.funcExtractUserIDOrigin)
-	}
-
-	if !m.ExtractUserIDMock.invocationsDone() && afterExtractUserIDCounter > 0 {
-		m.t.Errorf("Expected %d calls to UserMiddlewareMock.ExtractUserID at\n%s but found %d calls",
-			mm_atomic.LoadUint64(&m.ExtractUserIDMock.expectedInvocations), m.ExtractUserIDMock.expectedInvocationsOrigin, afterExtractUserIDCounter)
-	}
-}
-
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *UserMiddlewareMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
@@ -624,8 +429,6 @@ func (m *UserMiddlewareMock) MinimockFinish() {
 			m.MinimockAddAccessTokenFromCookieInspect()
 
 			m.MinimockCheckInspect()
-
-			m.MinimockExtractUserIDInspect()
 		}
 	})
 }
@@ -650,6 +453,5 @@ func (m *UserMiddlewareMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockAddAccessTokenFromCookieDone() &&
-		m.MinimockCheckDone() &&
-		m.MinimockExtractUserIDDone()
+		m.MinimockCheckDone()
 }

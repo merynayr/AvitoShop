@@ -1,4 +1,4 @@
-package user
+package shop
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/sys"
 )
 
-func (s *userService) SendCoins(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) error {
+func (s *shopService) SendCoins(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) error {
 	toUser, err := s.userRepository.GetUserByName(ctx, sendCoins.ToUser)
 	if err != nil {
 		return sys.RecipientNotFoundError

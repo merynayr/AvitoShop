@@ -12,7 +12,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/logger"
 	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/repository"
-	"github.com/merynayr/AvitoShop/internal/service/user"
+	"github.com/merynayr/AvitoShop/internal/service/shop"
 	"github.com/merynayr/AvitoShop/internal/sys"
 
 	txMocks "github.com/merynayr/AvitoShop/internal/client/db/mocks"
@@ -329,7 +329,7 @@ func TestSendCoin(t *testing.T) {
 			userRepoMock := tt.userRepositoryMock(minimock.NewController(t))
 			txManagerMock := tt.txManagerMock(minimock.NewController(t))
 
-			service := user.NewService(shopRepoMock, userRepoMock, txManagerMock)
+			service := shop.NewService(shopRepoMock, userRepoMock, txManagerMock)
 			err := service.SendCoins(tt.args.ctx, tt.args.fromUser, tt.args.SendCoins)
 
 			if tt.err != nil {

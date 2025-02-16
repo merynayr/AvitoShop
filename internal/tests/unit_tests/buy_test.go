@@ -15,7 +15,7 @@ import (
 	"github.com/merynayr/AvitoShop/internal/model"
 	"github.com/merynayr/AvitoShop/internal/repository"
 	repositoryMocks "github.com/merynayr/AvitoShop/internal/repository/mocks"
-	"github.com/merynayr/AvitoShop/internal/service/user"
+	"github.com/merynayr/AvitoShop/internal/service/shop"
 	"github.com/merynayr/AvitoShop/internal/sys"
 )
 
@@ -287,7 +287,7 @@ func TestBuy(t *testing.T) {
 			userRepoMock := tt.userRepositoryMock(minimock.NewController(t))
 			txManagerMock := tt.txManagerMock(minimock.NewController(t))
 
-			service := user.NewService(shopRepoMock, userRepoMock, txManagerMock)
+			service := shop.NewService(shopRepoMock, userRepoMock, txManagerMock)
 			err := service.Buy(tt.args.ctx, tt.args.user, tt.args.item)
 
 			if tt.err != nil {

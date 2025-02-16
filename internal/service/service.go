@@ -10,10 +10,6 @@ import (
 // ShopService интерфейс сервисного слоя shop
 type ShopService interface {
 	GetMerchPrice(ctx context.Context, item string) (int64, error)
-}
-
-// UserService интерфейс сервисного слоя user
-type UserService interface {
 	Buy(ctx context.Context, user *model.User, item string) error
 	SendCoins(ctx context.Context, fromUser *model.User, sendCoins *model.SendCoinRequest) error
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
