@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	PlaceholderDollar   = "$" // PlaceholderDollar - плейсхолдер доллара
-	PlaceholderQuestion = "?" // PlaceholderQuestion - плейсхолдер вопроса
+	// PlaceholderDollar - плейсхолдер доллара
+	PlaceholderDollar = "$"
+	// PlaceholderQuestion - плейсхолдер вопроса
+	PlaceholderQuestion = "?"
 )
 
 // Pretty преобразует БД-запрос к приятному виду для использования в логах

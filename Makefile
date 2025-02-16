@@ -15,7 +15,7 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 install-golangci-lint:
-	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
+	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
 
 lint:
 	go mod tidy
