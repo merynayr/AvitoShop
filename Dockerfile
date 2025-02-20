@@ -1,18 +1,19 @@
 FROM golang:1.23-alpine AS builder
 
-COPY . /github.com/merynayr/AvitoShop/source/
-WORKDIR /github.com/merynayr/AvitoShop/source/
+WORKDIR /app
 
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go build -o ./bin/app cmd/main.go
+
+COPY . .
+
+RUN CGO_ENABLED=0 go build -o /app/bin/app cmd/main.go
 
 FROM alpine:latest
 
-
 WORKDIR /root/
 
-COPY --from=builder /github.com/merynayr/AvitoShop/source/bin/app .
-
+COPY --from=builder /app/bin/app .
 COPY .env .
 
 CMD ["./app", "-config-path=.env"]

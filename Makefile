@@ -22,7 +22,7 @@ lint:
 	$(LOCAL_BIN)/golangci-lint run ./... --config .golangci.pipeline.yaml
 
 docker-build:
-	docker compose up --build -d
+	docker compose up -d --build
 
 docker-run:
 	docker compose up -d

@@ -10,7 +10,6 @@ import (
 	"github.com/merynayr/AvitoShop/internal/closer"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/config/env"
-	"github.com/merynayr/AvitoShop/internal/middleware/access"
 	"github.com/merynayr/AvitoShop/internal/repository"
 	"github.com/merynayr/AvitoShop/internal/service"
 
@@ -29,12 +28,13 @@ import (
 
 // Структура приложения со всеми зависимости
 type serviceProvider struct {
-	pgConfig      config.PGConfig
-	httpConfig    config.HTTPConfig
-	loggerConfig  config.LoggerConfig
-	swaggerConfig config.SwaggerConfig
-	authConfig    config.AuthConfig
-	accessConfig  config.AccessConfig
+	pgConfig         config.PGConfig
+	httpConfig       config.HTTPConfig
+	loggerConfig     config.LoggerConfig
+	swaggerConfig    config.SwaggerConfig
+	authConfig       config.AuthConfig
+	accessConfig     config.AccessConfig
+	prometheusConfig config.PrometheusConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -47,7 +47,7 @@ type serviceProvider struct {
 	authAPI     *authAPI.API
 	authService service.AuthService
 
-	middleware    middleware.UserMiddleware
+	middleware    middleware.Middleware
 	accessService service.AccessService
 }
 
@@ -134,6 +134,19 @@ func (s *serviceProvider) AccessConfig() config.AccessConfig {
 	return s.accessConfig
 }
 
+func (s *serviceProvider) PrometheusConfig() config.PrometheusConfig {
+	if s.prometheusConfig == nil {
+		cfg, err := env.NewPrometheusConfig()
+		if err != nil {
+			log.Fatalf("failed to get prometheus config")
+		}
+
+		s.prometheusConfig = cfg
+	}
+
+	return s.prometheusConfig
+}
+
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN())
@@ -218,10 +231,10 @@ func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	return s.authService
 }
 
-// AccessMiddleware инициализирует middleware доступа
-func (s *serviceProvider) AccessMiddleware(ctx context.Context) middleware.UserMiddleware {
+// Middleware инициализирует middleware доступа
+func (s *serviceProvider) Middleware(ctx context.Context) middleware.Middleware {
 	if s.middleware == nil {
-		s.middleware = access.NewMiddleware(
+		s.middleware = middleware.NewMiddlewareProvider(
 			s.AccessService(ctx),
 			s.AuthConfig(),
 		)
