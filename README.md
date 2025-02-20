@@ -29,6 +29,8 @@
 - **База данных:** PostgreSQL
 - **Контейнеризация:** Docker, Docker Compose
 - **Авторизация:** JWT
+- **Мониторинг и метрики:**
+Prometheus, Grafana, k6 
 
 ## Описание API
 
@@ -109,25 +111,17 @@ Makefile и в файле ./internal/tests/integration_tests/config_test.go
         make migration_for_test_up
         make migration_for_test_down
 
-Мой компьютер не выдерживает и 10к пользователей. Запросы начинают тормозить.
 
-    checks.........................: 100.00% 12103 out of 12103
-     data_received..................: 3.9 MB  94 kB/s
-     data_sent......................: 3.4 MB  81 kB/s
-     http_req_blocked...............: avg=58.15µs min=4.19µs  med=8.03µs  max=9.11ms p(90)=190.38µs p(95)=222.37µs
-     http_req_connecting............: avg=37.77µs min=0s      med=0s      max=9.05ms p(90)=131.1µs  p(95)=156.74µs
-    ✗ http_req_duration..............: avg=2.07s   min=1.26ms  med=2.1s    max=6.73s  p(90)=4.78s    p(95)=5.21s   
-        { expected_response:true }...: avg=2.07s   min=1.26ms  med=2.1s    max=6.73s  p(90)=4.78s    p(95)=5.21s   
-    ✓ http_req_failed................: 0.00%   0 out of 8645
-        http_req_receiving.............: avg=82.59µs min=17.94µs med=61.04µs max=4.12ms p(90)=104.69µs p(95)=190.77µs
-        http_req_sending...............: avg=32.08µs min=7.54µs  med=20.39µs max=3.86ms p(90)=46.37µs  p(95)=57.6µs  
-        http_req_tls_handshaking.......: avg=0s      min=0s      med=0s      max=0s     p(90)=0s       p(95)=0s      
-        http_req_waiting...............: avg=2.07s   min=1.19ms  med=2.1s    max=6.73s  p(90)=4.78s    p(95)=5.21s   
-        http_reqs......................: 8645    206.796369/s
-        iteration_duration.............: avg=11.37s  min=1.12s   med=13.56s  max=19.72s p(90)=19.27s   p(95)=19.39s  
-        iterations.....................: 1729    41.359274/s
-        vus............................: 698     min=2              max=1000
-        vus_max........................: 1000    min=1000           max=1000
+### Результаты при загрузке 1000 пользователей
+
+- Количество запросов в секунду (RPS) – показывает, сколько запросов обрабатывается в секунду на протяжении всего теста.
+- Время отклика (SLI Latency) – отображает продолжительность ответа от сервера, включая различные квантильные значения.
+- Процент успешных ответов (99-й квантиль успешности) – демонстрирует, сколько процентов запросов было успешными, включая максимальные значения.
+
+#### Графики:
+![График запросов в секунду](./scrinshots/RPS.png)
+![График времени отклика](./scrinshots/SLI%20Latency.png)
+![График 99го квентиля успешности ответов](./scrinshots/Success%20Rate.png)
 
 ## Линтер
 
