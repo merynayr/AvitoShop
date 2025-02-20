@@ -13,6 +13,8 @@ import (
 	"github.com/merynayr/AvitoShop/internal/closer"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/logger"
+	"github.com/merynayr/AvitoShop/internal/metric"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -54,7 +56,7 @@ func (a *App) Run() error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -71,6 +73,15 @@ func (a *App) Run() error {
 		err := a.runSwaggerServer()
 		if err != nil {
 			log.Fatalf("failed to run Swagger server: %v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		err := a.runPrometheusServer()
+		if err != nil {
+			log.Fatalf("failed to run Prometheus server: %v", err)
 		}
 	}()
 
@@ -113,12 +124,13 @@ func (a *App) initServiceProvider(_ context.Context) error {
 
 func (a *App) initHTTPServer(ctx context.Context) error {
 	logger.Init(a.serviceProvider.LoggerConfig().Level())
-
+	metric.Init(ctx)
 	router := gin.Default()
 
-	a.serviceProvider.AccessMiddleware(ctx)
-	router.Use(a.serviceProvider.middleware.AddAccessTokenFromCookie())
-	router.Use(a.serviceProvider.middleware.Check())
+	mw := a.serviceProvider.Middleware(ctx)
+	router.Use(mw.Metrics().Metrics())
+	router.Use(mw.Access().AddAccessTokenFromCookie())
+	router.Use(mw.Access().Check())
 
 	a.serviceProvider.ShopAPI(ctx)
 	a.serviceProvider.shopAPI.RegisterRoutes(router)
@@ -137,6 +149,9 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		Addr:              a.serviceProvider.HTTPConfig().Address(),
 		Handler:           corsMiddleware.Handler(router),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       4 * time.Second,
+		WriteTimeout:      4 * time.Second,
+		IdleTimeout:       30 * time.Second,
 	}
 
 	return nil
@@ -177,6 +192,26 @@ func (a *App) runSwaggerServer() error {
 	log.Printf("Swagger server is running on %s", a.serviceProvider.SwaggerConfig().Address())
 
 	err := a.swaggerServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) runPrometheusServer() error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	prometheusServer := &http.Server{
+		Addr:              a.serviceProvider.PrometheusConfig().Address(),
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	log.Printf("Prometheus server is running on %s", a.serviceProvider.PrometheusConfig().Address())
+
+	err := prometheusServer.ListenAndServe()
 	if err != nil {
 		return err
 	}

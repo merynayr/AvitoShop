@@ -1,55 +1,51 @@
 package access
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/merynayr/AvitoShop/internal/config"
 	"github.com/merynayr/AvitoShop/internal/service"
-	"github.com/merynayr/AvitoShop/internal/sys"
 )
 
-// Middleware access структура
+// Middleware структура для проверки доступа
 type Middleware struct {
 	accessService service.AccessService
 	authConfig    config.AuthConfig
 }
 
-// NewMiddleware возвращает новый объект middleware слоя access
-func NewMiddleware(accessService service.AccessService, authConfig config.AuthConfig) *Middleware {
+// NewAccessMiddleware возвращает новый объект middleware слоя access
+func NewAccessMiddleware(accessService service.AccessService, authConfig config.AuthConfig) *Middleware {
 	return &Middleware{
 		accessService: accessService,
 		authConfig:    authConfig,
 	}
 }
 
-// Check - общий middleware для проверки доступа
+// Check проверяет доступ к ресурсу
 func (m *Middleware) Check() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		endpoint := c.FullPath()
 
 		user, err := m.accessService.Check(c, endpoint)
 		if err != nil {
-			sys.HandleError(c, sys.AccessDeniedError)
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "access denied"})
 			return
 		}
 
 		c.Set("user", user)
-
 		c.Next()
 	}
 }
 
-// AddAccessTokenFromCookie - middleware, который извлекает токен доступа из куки и добавляет его в заголовок
+// AddAccessTokenFromCookie извлекает токен из cookie и добавляет в заголовок Authorization
 func (m *Middleware) AddAccessTokenFromCookie() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.GetHeader("Authorization") == "" {
 			accessToken, err := c.Cookie("access_token")
-			if err != nil {
-				c.Next()
-				return
+			if err == nil {
+				c.Request.Header.Set("Authorization", "Bearer "+accessToken)
 			}
-
-			c.Request.Header.Set("Authorization", "Bearer "+accessToken)
 		}
 		c.Next()
 	}

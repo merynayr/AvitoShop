@@ -49,3 +49,8 @@ type AuthConfig interface {
 type AccessConfig interface {
 	UserAccessesMap() (map[string]struct{}, error)
 }
+
+// PrometheusConfig интерфейс конфига prometheus http-сервера
+type PrometheusConfig interface {
+	Address() string
+}
