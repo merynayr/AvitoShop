@@ -128,6 +128,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	router := gin.Default()
 
 	mw := a.serviceProvider.Middleware(ctx)
+	router.Use(mw.TimeoutMiddleware(time.Second * 5))
 	router.Use(mw.Metrics().Metrics())
 	router.Use(mw.Access().AddAccessTokenFromCookie())
 	router.Use(mw.Access().Check())
